@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "thresholds": {
+    "file_functions": 20,
+    "file_lines": 300,
+    "function_args": 4,
+    "function_cognitive": 10,
+    "function_cyclomatic": 10,
+    "function_lines": 50,
+    "module_files": 20
+  },
+  "totals": {
+    "file_functions": 8,
+    "file_lines": 0,
+    "function_args": 1,
+    "function_cognitive": 3,
+    "function_cyclomatic": 9,
+    "function_lines": 0,
+    "module_files": 0
+  },
+  "violations": {
+    "file_functions": {
+      "src/collectors/structural.rs": 8
+    },
+    "file_lines": {},
+    "function_args": {
+      "src/collectors/structural.rs::record": 1
+    },
+    "function_cognitive": {
+      "src/main.rs::run": 1,
+      "src/ratchet.rs::check": 2
+    },
+    "function_cyclomatic": {
+      "src/main.rs::run": 9
+    },
+    "function_lines": {},
+    "module_files": {}
+  }
+}
