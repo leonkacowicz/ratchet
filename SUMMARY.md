@@ -5,10 +5,10 @@
 
 | State | Count |
 |---|---:|
-| backlog | 20 |
+| backlog | 31 |
 | ongoing | 3 |
 | done | 8 |
-| **total** | **31** |
+| **total** | **42** |
 
 ## Hierarchies
 
@@ -22,12 +22,13 @@
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 
-### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/12 pts · 0/5 done) · _medium_ · backlog
+### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
 
 - [ ] [#bys9rhu Test-vs-production ratio per module metric](backlog/bys9rhu-test-vs-production-ratio-per-module-metric.md) _(backlog)_
 - [ ] [#md82cjp Lines-per-module metric](backlog/md82cjp-lines-per-module-metric.md) _(backlog)_
 - [ ] [#phgwwrr Functions-per-module metric](backlog/phgwwrr-functions-per-module-metric.md) _(backlog)_
 - [ ] [#pqdqd7e Public API surface per module metric](backlog/pqdqd7e-public-api-surface-per-module-metric.md) _(backlog)_
+- [ ] [#t4akte5 Public method/attribute counts from rca npm/npa metrics](backlog/t4akte5-public-method-attribute-counts-from-rca-npm-npa-metrics.md) _(backlog)_
 - [ ] [#zytfjgw Count types per module (generalize space walk)](backlog/zytfjgw-count-types-per-module-generalize-space-walk.md) _(backlog)_
 
 ### [#bstr2wx Module relationship & dependency metrics](backlog/bstr2wx-module-relationship-dependency-metrics.md) — 0% (0/18 pts · 0/4 done) · _low_ · backlog
@@ -51,6 +52,18 @@
 - [x] [#9h98w7h Configurable source roots and include/exclude globs](done/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
+
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](backlog/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 0% (0/30 pts · 0/9 done) · _medium_ · backlog
+
+- [ ] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](backlog/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md) _(backlog)_
+- [ ] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](backlog/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md) _(backlog)_
+- [ ] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](backlog/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md) _(backlog)_
+- [ ] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](backlog/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md) _(backlog)_
+- [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](backlog/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(backlog)_
+- [ ] [#ne4vt2h Dual-path metric collector + rca parity harness](backlog/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md) _(backlog)_
+- [ ] [#pybgwkw Migrate SLOC to raw tree-sitter (Rust)](backlog/pybgwkw-migrate-sloc-to-raw-tree-sitter-rust.md) _(backlog)_
+- [ ] [#uruwbkx Rust PoC: vendor grammar + static-link, produce a raw tree-sitter tree](backlog/uruwbkx-rust-poc-vendor-grammar-static-link-produce-a-raw-tree-sitter-tree.md) _(backlog)_
+- [ ] [#yykk8vd Remove rca from the Rust path (all Rust metrics native)](backlog/yykk8vd-remove-rca-from-the-rust-path-all-rust-metrics-native.md) _(backlog)_
 
 ## Backlog
 
