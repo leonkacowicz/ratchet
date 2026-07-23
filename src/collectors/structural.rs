@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::collectors::Collector;
 use crate::language::Language;
+use crate::parity::file_level_metrics;
 use crate::report::CategoryMap;
 use crate::sources::Sources;
 
@@ -75,13 +76,17 @@ impl Structural {
     fn collect_for_file(&self, unit: &SourceFile, violations: &mut CategoryMap) -> Result<()> {
         let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
         let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
-        let Some(top) = unit.lang.parse_metrics(source.into_bytes(), unit.path) else {
+        let source_bytes = source.into_bytes();
+        let Some(top) = unit.lang.parse_metrics(source_bytes.clone(), unit.path) else {
             return Ok(());
         };
 
         let rel = &unit.rel;
-        let file_lines = sloc_for(&top);
-        let file_functions = function_count_for(&top);
+        // Migrated metrics compute natively over the raw tree-sitter tree for
+        // Rust (identical values to rca, verified by the parity harness); every
+        // other metric/language still routes through rca. The dispatch lives in
+        // `parity` so this (already `file_functions`-maxed) file stays flat.
+        let (file_lines, file_functions) = file_level_metrics(unit.lang, &source_bytes, &top);
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
         self.record(violations, CATEGORY_FILE_FUNCTIONS, rel.to_string(), file_functions);
 
@@ -116,7 +121,7 @@ fn relative_path(path: &Path, root: &Path) -> String {
     path.strip_prefix(root).unwrap_or(path).to_string_lossy().into_owned()
 }
 
-fn sloc_for(space: &FuncSpace) -> u64 {
+pub(crate) fn sloc_for(space: &FuncSpace) -> u64 {
     space.metrics.loc.sloc().round() as u64
 }
 
@@ -134,7 +139,7 @@ fn args_for(space: &FuncSpace) -> u64 {
     fn_args.max(closure_args).round() as u64
 }
 
-fn function_count_for(space: &FuncSpace) -> u64 {
+pub(crate) fn function_count_for(space: &FuncSpace) -> u64 {
     space.metrics.nom.total().round() as u64
 }
 

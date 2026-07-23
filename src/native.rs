@@ -67,6 +67,24 @@ pub fn visit_rust_functions(tree: &Tree, source: &[u8], f: &mut impl FnMut(&str,
     recurse(tree.root_node(), source, f);
 }
 
+/// File-level SLOC for Rust `source`, matching rca's `loc.sloc()` on the unit:
+/// the root node's `end_row - start_row`. `None` if the source fails to parse.
+pub fn rust_file_lines(source: &[u8]) -> Option<u64> {
+    let tree = parse_rust(source)?;
+    let root = tree.root_node();
+    Some((root.end_position().row - root.start_position().row) as u64)
+}
+
+/// File-level function count for Rust `source`, matching rca's `nom.total()`:
+/// the number of function spaces (`function_item` + `closure_expression`).
+/// `None` if the source fails to parse.
+pub fn rust_file_functions(source: &[u8]) -> Option<u64> {
+    let tree = parse_rust(source)?;
+    let mut count = 0u64;
+    visit_rust_functions(&tree, source, &mut |_name, _node| count += 1);
+    Some(count)
+}
+
 /// Ordered function entity names for a Rust `source` file, matching the rca
 /// path's function list. Empty when the source fails to parse.
 pub fn rust_function_entities(source: &[u8]) -> Vec<String> {

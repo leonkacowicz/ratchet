@@ -2,10 +2,10 @@
 //! off `rust-code-analysis` one at a time (see the migration epic).
 //!
 //! During migration a metric can be computed two ways — natively over a raw
-//! tree-sitter tree, or via rca — and it is only switched to the native path in
-//! production once the two agree on a corpus ([`check_parity`]). The production
-//! report does not consult the selector yet; that wiring lands with the Rust
-//! cutover, so these items are currently exercised only by tests.
+//! tree-sitter tree, or via rca — and it is switched to the native path in
+//! production ([`MIGRATED`] / [`use_native`]) only once the two agree on a corpus
+//! ([`check_parity`]). [`file_level_metrics`] is the production entry point;
+//! [`compute`]/[`check_parity`] are the test-only parity oracle.
 #![allow(dead_code)]
 
 use std::collections::BTreeMap;
@@ -13,7 +13,7 @@ use std::path::Path;
 
 use rust_code_analysis::FuncSpace;
 
-use crate::collectors::structural::{function_entity_name, visit_function_spaces};
+use crate::collectors::structural::{function_count_for, function_entity_name, sloc_for, visit_function_spaces};
 use crate::language::Language;
 use crate::native;
 
@@ -37,9 +37,9 @@ pub enum Backend {
     Native,
 }
 
-/// Metrics whose native implementation has reached rca parity and may drive the
+/// Metrics whose native implementation has reached rca parity and drives the
 /// production report. Grows as each migration lands.
-pub const MIGRATED: &[Metric] = &[];
+pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions];
 
 impl Metric {
     /// The backend that should compute this metric in production: the native
@@ -51,6 +51,27 @@ impl Metric {
             Backend::Rca
         }
     }
+}
+
+/// Whether production should compute `metric` for `lang` via the native path: it
+/// must be migrated *and* the language natively supported (Rust only today —
+/// other languages still route through rca until their grammars are vendored).
+pub fn use_native(metric: Metric, lang: Language) -> bool {
+    metric.backend() == Backend::Native && lang == Language::Rust
+}
+
+/// File-level metric values `(file_lines, file_functions)` for one already-parsed
+/// file, dispatching each metric to the native path when migrated for `lang`
+/// (Rust) and to rca otherwise. `source` is the same (test-stripped) bytes rca
+/// parsed into `top`; native falls back to rca only on a native parse failure.
+pub fn file_level_metrics(lang: Language, source: &[u8], top: &FuncSpace) -> (u64, u64) {
+    let file_lines = if use_native(Metric::FileLines, lang) { native::rust_file_lines(source).unwrap_or_else(|| sloc_for(top)) } else { sloc_for(top) };
+    let file_functions = if use_native(Metric::FileFunctions, lang) {
+        native::rust_file_functions(source).unwrap_or_else(|| function_count_for(top))
+    } else {
+        function_count_for(top)
+    };
+    (file_lines, file_functions)
 }
 
 /// Compute `metric` for a single Rust `source` file via `backend`, as an
@@ -127,11 +148,7 @@ fn rca_file_lines(source: &[u8], path: &Path) -> EntityValues {
 
 fn native_file_lines(source: &[u8], path: &Path) -> EntityValues {
     let mut out = EntityValues::new();
-    if let Some(tree) = native::parse_rust(source) {
-        let root = tree.root_node();
-        // Mirrors rca's file SLOC: `end_row - start_row` of the root node
-        // (rca `Sloc` unit branch). Same grammar + runtime → same rows.
-        let lines = (root.end_position().row - root.start_position().row) as u64;
+    if let Some(lines) = native::rust_file_lines(source) {
         out.insert(path.display().to_string(), lines);
     }
     out
@@ -147,11 +164,7 @@ fn rca_file_functions(source: &[u8], path: &Path) -> EntityValues {
 
 fn native_file_functions(source: &[u8], path: &Path) -> EntityValues {
     let mut out = EntityValues::new();
-    if let Some(tree) = native::parse_rust(source) {
-        // rca's `nom.total()` counts exactly the Function-kind spaces
-        // (function_item + closure_expression) — the ones the walk emits.
-        let mut count = 0u64;
-        native::visit_rust_functions(&tree, source, &mut |_name, _node| count += 1);
+    if let Some(count) = native::rust_file_functions(source) {
         out.insert(path.display().to_string(), count);
     }
     out
@@ -163,10 +176,11 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn test_backend_defaults_to_rca_until_metric_is_migrated() {
-        // MIGRATED is empty, so production still resolves every metric to rca;
-        // a metric moves to Native by being added there once its parity is green.
-        assert_eq!(Metric::FileLines.backend(), Backend::Rca);
+    fn test_use_native_requires_migrated_metric_and_supported_language() {
+        // A migrated metric uses the native path for Rust...
+        assert!(use_native(Metric::FileLines, Language::Rust));
+        // ...but never for a language whose grammar isn't vendored natively yet.
+        assert!(!use_native(Metric::FileLines, Language::Python));
     }
 
     #[test]
