@@ -109,6 +109,44 @@ fn nargs_of(node: &Node) -> u64 {
     params.children(&mut cursor).filter(|c| !matches!(c.kind(), "(" | ")" | "," | "|" | "attribute_item")).count() as u64
 }
 
+/// Per-function cyclomatic complexity for Rust `source`, as `(entity_name, value)`
+/// in walk order — matching rca's `cyclomatic_sum` (a subtree sum). Empty when the
+/// source fails to parse.
+pub fn rust_function_cyclomatic(source: &[u8]) -> Vec<(String, u64)> {
+    let Some(tree) = parse_rust(source) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    visit_rust_functions(&tree, source, &mut |name, node| out.push((name.to_string(), cyclomatic_of(&node))));
+    out
+}
+
+/// Cyclomatic complexity of a Rust function node, matching rca's `cyclomatic_sum`
+/// over the function's subtree: a base `1` for the function plus `1` for every
+/// nested function/closure space (each carries its own base) and `1` for every
+/// decision-point rca counts. rca counts the keyword *tokens* `if`/`for`/`while`/
+/// `loop` (so match guards and `if let` count too), each `match_arm`, the `?`
+/// operator (`try_expression`), and the `&&`/`||` operators.
+fn cyclomatic_of(func: &Node) -> u64 {
+    let mut total = 1;
+    count_cyclomatic(func, &mut total);
+    total
+}
+
+fn count_cyclomatic(node: &Node, total: &mut u64) {
+    let mut i = 0;
+    while i < node.child_count() {
+        let child = node.child(i).expect("child within count");
+        match child.kind() {
+            "function_item" | "closure_expression" => *total += 1,
+            "if" | "for" | "while" | "loop" | "match_arm" | "try_expression" | "&&" | "||" => *total += 1,
+            _ => {},
+        }
+        count_cyclomatic(&child, total);
+        i += 1;
+    }
+}
+
 /// Ordered function entity names for a Rust `source` file, matching the rca
 /// path's function list. Empty when the source fails to parse.
 pub fn rust_function_entities(source: &[u8]) -> Vec<String> {

@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::collectors::Collector;
 use crate::language::Language;
-use crate::parity::{file_level_metrics, function_args_values};
+use crate::parity::{file_level_metrics, function_metric_values, Metric};
 use crate::report::CategoryMap;
 use crate::sources::Sources;
 
@@ -95,13 +95,15 @@ impl Structural {
             let entity_name = function_entity_name(space, &mut closure_counter);
             let entity = format!("{rel}::{entity_name}");
             self.record(violations, CATEGORY_FUNCTION_LINES, entity.clone(), sloc_for(space));
-            self.record(violations, CATEGORY_FUNCTION_COGNITIVE, entity.clone(), cognitive_for(space));
-            self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, entity, cyclomatic_for(space));
+            self.record(violations, CATEGORY_FUNCTION_COGNITIVE, entity, cognitive_for(space));
         });
-        // function_args dispatches to the native path when migrated (Rust), rca
-        // otherwise; entity names line up with the walk above.
-        for (name, nargs) in function_args_values(unit.lang, &source_bytes, &top) {
-            self.record(violations, CATEGORY_FUNCTION_ARGS, format!("{rel}::{name}"), nargs);
+        // Migrated function-level metrics dispatch to the native path (Rust) or
+        // rca otherwise; entity names line up with the walk above.
+        for (name, value) in function_metric_values(Metric::FunctionCyclomatic, unit.lang, &source_bytes, &top) {
+            self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, format!("{rel}::{name}"), value);
+        }
+        for (name, value) in function_metric_values(Metric::FunctionArgs, unit.lang, &source_bytes, &top) {
+            self.record(violations, CATEGORY_FUNCTION_ARGS, format!("{rel}::{name}"), value);
         }
 
         Ok(())
@@ -133,7 +135,7 @@ fn cognitive_for(space: &FuncSpace) -> u64 {
     space.metrics.cognitive.cognitive_sum().round() as u64
 }
 
-fn cyclomatic_for(space: &FuncSpace) -> u64 {
+pub(crate) fn cyclomatic_for(space: &FuncSpace) -> u64 {
     space.metrics.cyclomatic.cyclomatic_sum().round() as u64
 }
 

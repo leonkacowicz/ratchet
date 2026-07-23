@@ -10,7 +10,7 @@
 
 use rust_code_analysis::FuncSpace;
 
-use crate::collectors::structural::{args_for, function_count_for, function_entity_name, sloc_for, visit_function_spaces};
+use crate::collectors::structural::{args_for, cyclomatic_for, function_count_for, function_entity_name, sloc_for, visit_function_spaces};
 use crate::language::Language;
 use crate::native;
 
@@ -23,6 +23,8 @@ pub enum Metric {
     FileFunctions,
     /// Argument count per function — rca `max(fn_args, closure_args)`.
     FunctionArgs,
+    /// Cyclomatic complexity per function — rca `cyclomatic_sum` (subtree sum).
+    FunctionCyclomatic,
 }
 
 /// Which implementation computes a metric.
@@ -34,7 +36,7 @@ pub enum Backend {
 
 /// Metrics whose native implementation has reached rca parity and drives the
 /// production report. Grows as each migration lands.
-pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs];
+pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs, Metric::FunctionCyclomatic];
 
 impl Metric {
     /// The backend that should compute this metric in production: the native
@@ -69,23 +71,37 @@ pub fn file_level_metrics(lang: Language, source: &[u8], top: &FuncSpace) -> (u6
     (file_lines, file_functions)
 }
 
-/// Per-function argument counts `(entity_name, nargs)` in walk order for one
-/// already-parsed file, via the native path when `FunctionArgs` is migrated for
-/// `lang` and rca otherwise. Entity names are bare (the caller prefixes the file
-/// path), matching the rca function loop in `structural.rs`.
-pub fn function_args_values(lang: Language, source: &[u8], top: &FuncSpace) -> Vec<(String, u64)> {
-    if use_native(Metric::FunctionArgs, lang) {
-        native::rust_function_nargs(source)
+/// Per-function values `(entity_name, value)` in walk order for a function-level
+/// `metric` on one already-parsed file — via the native path when the metric is
+/// migrated for `lang`, rca otherwise. Entity names are bare (the caller prefixes
+/// the file path), matching the rca function loop in `structural.rs`.
+pub fn function_metric_values(metric: Metric, lang: Language, source: &[u8], top: &FuncSpace) -> Vec<(String, u64)> {
+    if use_native(metric, lang) {
+        native_function_metric(metric, source)
     } else {
-        rca_function_args(top)
+        rca_function_metric(metric, top)
     }
 }
 
-/// rca's per-function argument counts as `(entity_name, nargs)` in walk order.
-fn rca_function_args(top: &FuncSpace) -> Vec<(String, u64)> {
+/// Native per-function values for a function-level `metric`.
+fn native_function_metric(metric: Metric, source: &[u8]) -> Vec<(String, u64)> {
+    match metric {
+        Metric::FunctionArgs => native::rust_function_nargs(source),
+        Metric::FunctionCyclomatic => native::rust_function_cyclomatic(source),
+        other => panic!("{other:?} is not a native function-level metric"),
+    }
+}
+
+/// rca per-function values for a function-level `metric`, in walk order.
+fn rca_function_metric(metric: Metric, top: &FuncSpace) -> Vec<(String, u64)> {
+    let per_space: fn(&FuncSpace) -> u64 = match metric {
+        Metric::FunctionArgs => args_for,
+        Metric::FunctionCyclomatic => cyclomatic_for,
+        other => panic!("{other:?} is not a function-level metric"),
+    };
     let mut out = Vec::new();
     let mut closure_counter: u32 = 0;
-    visit_function_spaces(top, &mut |space| out.push((function_entity_name(space, &mut closure_counter), args_for(space))));
+    visit_function_spaces(top, &mut |space| out.push((function_entity_name(space, &mut closure_counter), per_space(space))));
     out
 }
 
@@ -106,17 +122,29 @@ mod tests {
     /// entity→value map. Function-level metrics key each entity as `path::name`
     /// (colliding closures collapse, exactly as the production report's map does).
     fn compute(metric: Metric, backend: Backend, source: &[u8], path: &Path) -> EntityValues {
-        match (metric, backend) {
-            (Metric::FileLines, Backend::Rca) => single(path, Language::Rust.parse_metrics(source.to_vec(), path).map(|t| t.metrics.loc.sloc().round() as u64)),
-            (Metric::FileLines, Backend::Native) => single(path, native::rust_file_lines(source)),
-            (Metric::FileFunctions, Backend::Rca) => {
-                single(path, Language::Rust.parse_metrics(source.to_vec(), path).map(|t| t.metrics.nom.total().round() as u64))
-            },
-            (Metric::FileFunctions, Backend::Native) => single(path, native::rust_file_functions(source)),
-            (Metric::FunctionArgs, Backend::Rca) => {
-                keyed_by_path(path, Language::Rust.parse_metrics(source.to_vec(), path).map(|t| rca_function_args(&t)).unwrap_or_default())
-            },
-            (Metric::FunctionArgs, Backend::Native) => keyed_by_path(path, native::rust_function_nargs(source)),
+        let rca_top = || Language::Rust.parse_metrics(source.to_vec(), path);
+        match metric {
+            Metric::FileLines => single(
+                path,
+                match backend {
+                    Backend::Rca => rca_top().map(|t| t.metrics.loc.sloc().round() as u64),
+                    Backend::Native => native::rust_file_lines(source),
+                },
+            ),
+            Metric::FileFunctions => single(
+                path,
+                match backend {
+                    Backend::Rca => rca_top().map(|t| t.metrics.nom.total().round() as u64),
+                    Backend::Native => native::rust_file_functions(source),
+                },
+            ),
+            Metric::FunctionArgs | Metric::FunctionCyclomatic => keyed_by_path(
+                path,
+                match backend {
+                    Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
+                    Backend::Native => native_function_metric(metric, source),
+                },
+            ),
         }
     }
 
@@ -223,6 +251,21 @@ mod tests {
         // `self` counts; a 2-arg method is 3; the closure `|x|` is 1; no-arg fn is 0.
         let src = b"struct S;\nimpl S { fn m(&self, a: i32, b: u8) { let c = |x: i32| x; } }\nfn n() {}\n";
         assert_eq!(native::rust_function_nargs(src), vec![("m".to_string(), 3), ("<anonymous>".to_string(), 1), ("n".to_string(), 0)]);
+    }
+
+    #[test]
+    fn test_native_cyclomatic_sums_subtree_including_nested_closures() {
+        // base 1 each; `&&` counts; `nested` folds in its closure (2) → 4.
+        let src = b"fn simple() {}\nfn one_if(x: bool) { if x {} }\nfn two(a: bool, b: bool) { if a && b {} }\nfn nested() { let c = || { if true {} }; if false {} }\n";
+        assert_eq!(
+            native::rust_function_cyclomatic(src),
+            vec![("simple".to_string(), 1), ("one_if".to_string(), 2), ("two".to_string(), 3), ("nested".to_string(), 4), ("<anonymous>".to_string(), 2)]
+        );
+    }
+
+    #[test]
+    fn test_function_cyclomatic_parity_over_repo_corpus() {
+        assert_metric_parity_over_corpus(Metric::FunctionCyclomatic);
     }
 
     #[test]
