@@ -5,16 +5,16 @@
 
 | State | Count |
 |---|---:|
-| backlog | 30 |
-| ongoing | 0 |
-| done | 0 |
+| backlog | 28 |
+| ongoing | 1 |
+| done | 1 |
 | **total** | **30** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](backlog/83srk9g-packaging-ci-developer-experience.md) — 0% (0/13 pts · 0/6 done) · _medium_ · backlog
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 15% (2/13 pts · 1/6 done) · _medium_ · ongoing
 
-- [ ] [#8a7532w Example CI workflow (generate / check / compare)](backlog/8a7532w-example-ci-workflow-generate-check-compare.md) _(backlog)_
+- [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [ ] [#g72wvqb Rename workspace_root param to root](backlog/g72wvqb-rename-workspace-root-param-to-root.md) _(backlog)_
 - [ ] [#m9435x3 Distribution: cargo install & prebuilt binaries](backlog/m9435x3-distribution-cargo-install-prebuilt-binaries.md) _(backlog)_
