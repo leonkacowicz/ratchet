@@ -92,13 +92,14 @@ impl Structural {
 
         let mut closure_counter: u32 = 0;
         visit_function_spaces(&top, &mut |space| {
-            let entity_name = function_entity_name(space, &mut closure_counter);
-            let entity = format!("{rel}::{entity_name}");
-            self.record(violations, CATEGORY_FUNCTION_LINES, entity.clone(), sloc_for(space));
+            let entity = format!("{rel}::{}", function_entity_name(space, &mut closure_counter));
             self.record(violations, CATEGORY_FUNCTION_COGNITIVE, entity, cognitive_for(space));
         });
         // Migrated function-level metrics dispatch to the native path (Rust) or
         // rca otherwise; entity names line up with the walk above.
+        for (name, value) in function_metric_values(Metric::FunctionLines, unit.lang, &source_bytes, &top) {
+            self.record(violations, CATEGORY_FUNCTION_LINES, format!("{rel}::{name}"), value);
+        }
         for (name, value) in function_metric_values(Metric::FunctionCyclomatic, unit.lang, &source_bytes, &top) {
             self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, format!("{rel}::{name}"), value);
         }

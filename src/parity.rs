@@ -25,6 +25,8 @@ pub enum Metric {
     FunctionArgs,
     /// Cyclomatic complexity per function — rca `cyclomatic_sum` (subtree sum).
     FunctionCyclomatic,
+    /// Source lines per function — rca `loc.sloc()` on the function space.
+    FunctionLines,
 }
 
 /// Which implementation computes a metric.
@@ -36,7 +38,7 @@ pub enum Backend {
 
 /// Metrics whose native implementation has reached rca parity and drives the
 /// production report. Grows as each migration lands.
-pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs, Metric::FunctionCyclomatic];
+pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionLines];
 
 impl Metric {
     /// The backend that should compute this metric in production: the native
@@ -88,6 +90,7 @@ fn native_function_metric(metric: Metric, source: &[u8]) -> Vec<(String, u64)> {
     match metric {
         Metric::FunctionArgs => native::rust_function_nargs(source),
         Metric::FunctionCyclomatic => native::rust_function_cyclomatic(source),
+        Metric::FunctionLines => native::rust_function_lines(source),
         other => panic!("{other:?} is not a native function-level metric"),
     }
 }
@@ -97,6 +100,7 @@ fn rca_function_metric(metric: Metric, top: &FuncSpace) -> Vec<(String, u64)> {
     let per_space: fn(&FuncSpace) -> u64 = match metric {
         Metric::FunctionArgs => args_for,
         Metric::FunctionCyclomatic => cyclomatic_for,
+        Metric::FunctionLines => sloc_for,
         other => panic!("{other:?} is not a function-level metric"),
     };
     let mut out = Vec::new();
@@ -138,7 +142,7 @@ mod tests {
                     Backend::Native => native::rust_file_functions(source),
                 },
             ),
-            Metric::FunctionArgs | Metric::FunctionCyclomatic => keyed_by_path(
+            Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines => keyed_by_path(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
@@ -266,6 +270,18 @@ mod tests {
     #[test]
     fn test_function_cyclomatic_parity_over_repo_corpus() {
         assert_metric_parity_over_corpus(Metric::FunctionCyclomatic);
+    }
+
+    #[test]
+    fn test_native_function_lines_spans_the_function_node() {
+        // `end_row - start_row + 1`: the 3-line `f` is 3; the one-line `g` is 1.
+        let src = b"fn f() {\n    let x = 1;\n}\nfn g() { 1 }\n";
+        assert_eq!(native::rust_function_lines(src), vec![("f".to_string(), 3), ("g".to_string(), 1)]);
+    }
+
+    #[test]
+    fn test_function_lines_parity_over_repo_corpus() {
+        assert_metric_parity_over_corpus(Metric::FunctionLines);
     }
 
     #[test]

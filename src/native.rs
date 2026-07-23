@@ -109,6 +109,21 @@ fn nargs_of(node: &Node) -> u64 {
     params.children(&mut cursor).filter(|c| !matches!(c.kind(), "(" | ")" | "," | "|" | "attribute_item")).count() as u64
 }
 
+/// Per-function SLOC for Rust `source`, as `(entity_name, value)` in walk order —
+/// matching rca's `loc.sloc()` on a function space (the non-unit branch,
+/// `end_row - start_row + 1` of the function node). Empty when parsing fails.
+pub fn rust_function_lines(source: &[u8]) -> Vec<(String, u64)> {
+    let Some(tree) = parse_rust(source) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    visit_rust_functions(&tree, source, &mut |name, node| {
+        let lines = (node.end_position().row - node.start_position().row) as u64 + 1;
+        out.push((name.to_string(), lines));
+    });
+    out
+}
+
 /// Per-function cyclomatic complexity for Rust `source`, as `(entity_name, value)`
 /// in walk order — matching rca's `cyclomatic_sum` (a subtree sum). Empty when the
 /// source fails to parse.
