@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 28 |
+| backlog | 27 |
 | ongoing | 4 |
-| done | 11 |
+| done | 12 |
 | **total** | **43** |
 
 ## Hierarchies
@@ -53,12 +53,12 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 27% (9/33 pts · 3/10 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 33% (11/33 pts · 4/10 done) · _medium_ · ongoing
 
 - [ ] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](backlog/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md) _(backlog)_
 - [ ] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](backlog/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md) _(backlog)_
 - [ ] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](backlog/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md) _(backlog)_
-- [ ] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](backlog/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md) _(backlog)_
+- [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](done/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
 - [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](backlog/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(backlog)_
 - [x] [#mz997tp Native function-space walk: identify + name functions to match rca](done/mz997tp-native-function-space-walk-identify-name-functions-to-match-rca.md)
 - [x] [#ne4vt2h Dual-path metric collector + rca parity harness](done/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md)
