@@ -5,18 +5,18 @@
 
 | State | Count |
 |---|---:|
-| backlog | 29 |
-| ongoing | 1 |
-| done | 1 |
+| backlog | 23 |
+| ongoing | 3 |
+| done | 5 |
 | **total** | **31** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 14% (2/14 pts · 1/7 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 21% (3/14 pts · 2/7 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
-- [ ] [#g72wvqb Rename workspace_root param to root](backlog/g72wvqb-rename-workspace-root-param-to-root.md) _(backlog)_
+- [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
 - [ ] [#m9435x3 Distribution: cargo install & prebuilt binaries](backlog/m9435x3-distribution-cargo-install-prebuilt-binaries.md) _(backlog)_
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
 - [ ] [#s8y8set Bump CI actions off deprecated Node.js 20](backlog/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md) _(backlog)_
@@ -37,18 +37,18 @@
 - [ ] [#pm3sm8p Coupling metrics (fan-in/fan-out, instability)](backlog/pm3sm8p-coupling-metrics-fan-in-fan-out-instability.md) _(backlog)_
 - [ ] [#xg5fk9a Extract module import/dependency graph](backlog/xg5fk9a-extract-module-import-dependency-graph.md) _(backlog)_
 
-### [#cjdfqrx Multi-language support](backlog/cjdfqrx-multi-language-support.md) — 0% (0/19 pts · 0/5 done) · _high_ · backlog
+### [#cjdfqrx Multi-language support](ongoing/cjdfqrx-multi-language-support.md) — 16% (3/19 pts · 1/5 done) · _high_ · ongoing
 
 - [ ] [#7g5s97m Go support via external-tool collector](backlog/7g5s97m-go-support-via-external-tool-collector.md) _(backlog)_
 - [ ] [#b3bbdge Kotlin support](backlog/b3bbdge-kotlin-support.md) _(backlog)_
 - [ ] [#e4jhf5c Handle uneven metric coverage across languages](backlog/e4jhf5c-handle-uneven-metric-coverage-across-languages.md) _(backlog)_
 - [ ] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](backlog/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md) _(backlog)_
-- [ ] [#mzm7h9r Dispatch parser by file extension](backlog/mzm7h9r-dispatch-parser-by-file-extension.md) _(backlog)_
+- [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ez785p3 Configuration file support](backlog/ez785p3-configuration-file-support.md) — 0% (0/11 pts · 0/4 done) · _high_ · backlog
+### [#ez785p3 Configuration file support](ongoing/ez785p3-configuration-file-support.md) — 55% (6/11 pts · 2/4 done) · _high_ · ongoing
 
-- [ ] [#4mtrdc7 Define config file format and loader](backlog/4mtrdc7-define-config-file-format-and-loader.md) _(backlog)_
-- [ ] [#9h98w7h Configurable source roots and include/exclude globs](backlog/9h98w7h-configurable-source-roots-and-include-exclude-globs.md) _(backlog)_
+- [x] [#4mtrdc7 Define config file format and loader](done/4mtrdc7-define-config-file-format-and-loader.md)
+- [x] [#9h98w7h Configurable source roots and include/exclude globs](done/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [ ] [#w2tdb7m Move metric thresholds into the config file](backlog/w2tdb7m-move-metric-thresholds-into-the-config-file.md) _(backlog)_
 
