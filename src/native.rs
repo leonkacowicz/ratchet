@@ -85,6 +85,30 @@ pub fn rust_file_functions(source: &[u8]) -> Option<u64> {
     Some(count)
 }
 
+/// Per-function argument counts for Rust `source`, as `(entity_name, nargs)` in
+/// walk order — matching rca's `nargs` (`fn_args`/`closure_args`). Empty when the
+/// source fails to parse.
+pub fn rust_function_nargs(source: &[u8]) -> Vec<(String, u64)> {
+    let Some(tree) = parse_rust(source) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    visit_rust_functions(&tree, source, &mut |name, node| out.push((name.to_string(), nargs_of(&node))));
+    out
+}
+
+/// Argument count of a Rust function/closure node, mirroring rca's `compute_args`
+/// and `is_non_arg`: every child of the `parameters` field except the delimiters
+/// (parens, comma, pipe) and `attribute_item`. Note that `self` (a
+/// `self_parameter`) counts as an argument, matching rca.
+fn nargs_of(node: &Node) -> u64 {
+    let Some(params) = node.child_by_field_name("parameters") else {
+        return 0;
+    };
+    let mut cursor = params.walk();
+    params.children(&mut cursor).filter(|c| !matches!(c.kind(), "(" | ")" | "," | "|" | "attribute_item")).count() as u64
+}
+
 /// Ordered function entity names for a Rust `source` file, matching the rca
 /// path's function list. Empty when the source fails to parse.
 pub fn rust_function_entities(source: &[u8]) -> Vec<String> {

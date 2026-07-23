@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::collectors::Collector;
 use crate::language::Language;
-use crate::parity::file_level_metrics;
+use crate::parity::{file_level_metrics, function_args_values};
 use crate::report::CategoryMap;
 use crate::sources::Sources;
 
@@ -96,9 +96,13 @@ impl Structural {
             let entity = format!("{rel}::{entity_name}");
             self.record(violations, CATEGORY_FUNCTION_LINES, entity.clone(), sloc_for(space));
             self.record(violations, CATEGORY_FUNCTION_COGNITIVE, entity.clone(), cognitive_for(space));
-            self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, entity.clone(), cyclomatic_for(space));
-            self.record(violations, CATEGORY_FUNCTION_ARGS, entity, args_for(space));
+            self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, entity, cyclomatic_for(space));
         });
+        // function_args dispatches to the native path when migrated (Rust), rca
+        // otherwise; entity names line up with the walk above.
+        for (name, nargs) in function_args_values(unit.lang, &source_bytes, &top) {
+            self.record(violations, CATEGORY_FUNCTION_ARGS, format!("{rel}::{name}"), nargs);
+        }
 
         Ok(())
     }
@@ -133,7 +137,7 @@ fn cyclomatic_for(space: &FuncSpace) -> u64 {
     space.metrics.cyclomatic.cyclomatic_sum().round() as u64
 }
 
-fn args_for(space: &FuncSpace) -> u64 {
+pub(crate) fn args_for(space: &FuncSpace) -> u64 {
     let fn_args = space.metrics.nargs.fn_args();
     let closure_args = space.metrics.nargs.closure_args();
     fn_args.max(closure_args).round() as u64
