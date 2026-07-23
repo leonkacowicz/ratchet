@@ -77,16 +77,19 @@ impl Structural {
         let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
         let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
         let source_bytes = source.into_bytes();
-        let Some(top) = unit.lang.parse_metrics(source_bytes.clone(), unit.path) else {
-            return Ok(());
+        // rca now backs only the languages not yet migrated to the native path.
+        // Rust is fully native (all metrics verified at parity), so it is never
+        // parsed through rca — a `None` `top` flows straight to the native path.
+        let top = match unit.lang {
+            Language::Rust => None,
+            _ => match unit.lang.parse_metrics(source_bytes.clone(), unit.path) {
+                Some(parsed) => Some(parsed),
+                None => return Ok(()),
+            },
         };
 
         let rel = &unit.rel;
-        // Migrated metrics compute natively over the raw tree-sitter tree for
-        // Rust (identical values to rca, verified by the parity harness); every
-        // other metric/language still routes through rca. The dispatch lives in
-        // `parity` so this (already `file_functions`-maxed) file stays flat.
-        let (file_lines, file_functions) = file_level_metrics(unit.lang, &source_bytes, &top);
+        let (file_lines, file_functions) = file_level_metrics(unit.lang, &source_bytes, top.as_ref());
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
         self.record(violations, CATEGORY_FILE_FUNCTIONS, rel.to_string(), file_functions);
 
@@ -100,7 +103,7 @@ impl Structural {
             (Metric::FunctionArgs, CATEGORY_FUNCTION_ARGS),
         ];
         for (metric, category) in function_metrics {
-            for (name, value) in function_metric_values(metric, unit.lang, &source_bytes, &top) {
+            for (name, value) in function_metric_values(metric, unit.lang, &source_bytes, top.as_ref()) {
                 self.record(violations, category, format!("{rel}::{name}"), value);
             }
         }

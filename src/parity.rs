@@ -3,10 +3,11 @@
 //!
 //! A metric can be computed two ways — natively over a raw tree-sitter tree, or
 //! via rca. [`use_native`] / [`MIGRATED`] decide which the production report uses
-//! for a given language; [`file_level_metrics`] and [`function_args_values`] are
-//! the production entry points. A metric only joins `MIGRATED` once the native
-//! and rca results are proven identical on a corpus — that proof lives in the
-//! `#[cfg(test)]` parity oracle at the bottom of this file.
+//! for a given language; [`file_level_metrics`] and [`function_metric_values`] are
+//! the production entry points. Fully-migrated languages (Rust today) never parse
+//! through rca — their `top` is `None`. A metric only joins `MIGRATED` once the
+//! native and rca results are proven identical on a corpus — that proof lives in
+//! the `#[cfg(test)]` parity oracle at the bottom of this file.
 
 use rust_code_analysis::FuncSpace;
 
@@ -62,29 +63,26 @@ pub fn use_native(metric: Metric, lang: Language) -> bool {
     metric.backend() == Backend::Native && lang == Language::Rust
 }
 
-/// File-level metric values `(file_lines, file_functions)` for one already-parsed
-/// file, dispatching each metric to the native path when migrated for `lang`
-/// (Rust) and to rca otherwise. `source` is the same (test-stripped) bytes rca
-/// parsed into `top`; native falls back to rca only on a native parse failure.
-pub fn file_level_metrics(lang: Language, source: &[u8], top: &FuncSpace) -> (u64, u64) {
-    let file_lines = if use_native(Metric::FileLines, lang) { native::rust_file_lines(source).unwrap_or_else(|| sloc_for(top)) } else { sloc_for(top) };
-    let file_functions = if use_native(Metric::FileFunctions, lang) {
-        native::rust_file_functions(source).unwrap_or_else(|| function_count_for(top))
-    } else {
-        function_count_for(top)
-    };
+/// File-level metric values `(file_lines, file_functions)` for one file,
+/// dispatching each metric to the native path when migrated for `lang` and to
+/// rca otherwise. `top` is the rca parse for non-native languages and `None` for
+/// Rust (which never touches rca); the native path works from `source` alone.
+pub fn file_level_metrics(lang: Language, source: &[u8], top: Option<&FuncSpace>) -> (u64, u64) {
+    let file_lines = if use_native(Metric::FileLines, lang) { native::rust_file_lines(source).unwrap_or(0) } else { top.map_or(0, sloc_for) };
+    let file_functions =
+        if use_native(Metric::FileFunctions, lang) { native::rust_file_functions(source).unwrap_or(0) } else { top.map_or(0, function_count_for) };
     (file_lines, file_functions)
 }
 
 /// Per-function values `(entity_name, value)` in walk order for a function-level
-/// `metric` on one already-parsed file — via the native path when the metric is
-/// migrated for `lang`, rca otherwise. Entity names are bare (the caller prefixes
-/// the file path), matching the rca function loop in `structural.rs`.
-pub fn function_metric_values(metric: Metric, lang: Language, source: &[u8], top: &FuncSpace) -> Vec<(String, u64)> {
+/// `metric` — via the native path when the metric is migrated for `lang`, rca
+/// otherwise. `top` is `None` for Rust (fully native). Entity names are bare (the
+/// caller prefixes the file path), matching the rca function loop in `structural.rs`.
+pub fn function_metric_values(metric: Metric, lang: Language, source: &[u8], top: Option<&FuncSpace>) -> Vec<(String, u64)> {
     if use_native(metric, lang) {
         native_function_metric(metric, source)
     } else {
-        rca_function_metric(metric, top)
+        top.map_or_else(Vec::new, |t| rca_function_metric(metric, t))
     }
 }
 
