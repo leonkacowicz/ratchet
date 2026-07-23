@@ -71,16 +71,24 @@ between baseline and HEAD is rejected, forcing it into its own reviewable PR.
 
 ## Languages
 
-Files are dispatched to a parser by extension. Supported today:
+Files are dispatched to a grammar by extension. The enabled set is exactly the languages
+`rust-code-analysis` measures with full metric coverage:
 
-| Language | Extensions |
-|---|---|
-| Rust | `.rs` |
-| TypeScript | `.ts` |
-| TSX | `.tsx` |
+| Language | Extensions | Grammar |
+|---|---|---|
+| Rust | `.rs` | tree-sitter-rust |
+| C / C++ | `.c` `.cc` `.cpp` `.cxx` `.h` `.hh` `.hpp` `.hxx` | tree-sitter-cpp |
+| Python | `.py` | tree-sitter-python |
+| Java | `.java` | tree-sitter-java |
+| JavaScript | `.js` `.mjs` `.cjs` `.jsx` | tree-sitter-mozjs |
+| TypeScript | `.ts` | tree-sitter-typescript |
+| TSX | `.tsx` | tree-sitter-tsx |
 
-Only files with a supported extension are analyzed; anything else under the source roots
-is ignored. `#[cfg(test)]` module stripping applies to Rust files only.
+Extension routing mirrors rust-code-analysis's own (e.g. `.js`/`.jsx` go to the Mozjs
+grammar; `tree-sitter-cpp` covers both C and C++). Only files with a supported extension
+are analyzed; anything else under the source roots is ignored. `#[cfg(test)]` module
+stripping applies to Rust files only. Runnable examples live in
+[`tests/fixtures/`](tests/fixtures), one per language.
 
 ## Configuration
 
@@ -122,6 +130,7 @@ building the binary (or `cargo install --git https://github.com/leonkacowicz/rat
 
 ## Status
 
-Early standalone extraction. Analyzes **Rust**, **TypeScript**, and **TSX** across
-configurable source roots with include/exclude globs. Further languages, thresholds in
+Early standalone extraction. Analyzes **Rust**, **C/C++**, **Python**, **Java**,
+**JavaScript**, **TypeScript**, and **TSX** across configurable source roots with
+include/exclude globs. Further languages (Kotlin, Go via an external tool), thresholds in
 config, and organizational metrics are tracked in the issue tracker (`trck`).

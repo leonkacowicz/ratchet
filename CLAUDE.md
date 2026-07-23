@@ -30,7 +30,7 @@ source files → collectors/ (metrics) → report (excess vs threshold) → ratc
 | `src/main.rs` | CLI entry point and the `generate` / `check` / `compare` / `dump` verbs |
 | `src/config.rs` | `Config` — the optional `ratchet.json` (source roots + include/exclude globs) |
 | `src/sources.rs` | `Sources` — compiles the config into glob sets and discovers `(path, Language)` pairs |
-| `src/language.rs` | `Language` — extension→parser dispatch (Rust / TypeScript / TSX) |
+| `src/language.rs` | `Language` — extension→parser dispatch (Rust / C/C++ / Python / Java / JavaScript / TypeScript / TSX) |
 | `src/collectors/mod.rs` | `Collector` trait — extracts a `category → entity → excess` map from one source |
 | `src/collectors/structural.rs` | The only collector today: per-file metrics via `rust-code-analysis` (tree-sitter based) plus directory-level aggregation |
 | `src/report.rs` | `Report` type, thresholds, per-category totals, deterministic JSON |
@@ -45,11 +45,14 @@ tier is opinionated and ours.
 (2) no category total may grow. Together these make splitting a fat file/function *pass*
 (total drops), renames neutral, and categories ratchet independently.
 
-**Current scope.** Rust, TypeScript, and TSX. Files are dispatched to a parser by
-extension (`src/language.rs`); source roots and include/exclude globs come from an optional
-`ratchet.json` (`src/config.rs` → `src/sources.rs`), defaulting to scanning `src`.
-`#[cfg(test)]` stripping applies to Rust only. Further languages, thresholds-in-config, and
-organizational metrics are the roadmap — see issue tracking below.
+**Current scope.** Rust, C/C++, Python, Java, JavaScript, TypeScript, and TSX — the
+languages `rust-code-analysis` measures with full metric coverage. Files are dispatched to
+a parser by extension (`src/language.rs`, mirroring rca's own extension routing); source
+roots and include/exclude globs come from an optional `ratchet.json` (`src/config.rs` →
+`src/sources.rs`), defaulting to scanning `src`. `#[cfg(test)]` stripping applies to Rust
+only. Runnable per-language examples live in `tests/fixtures/`. Further languages (Kotlin,
+Go via an external tool), thresholds-in-config, and organizational metrics are the
+roadmap — see issue tracking below.
 
 ---
 
