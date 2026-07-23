@@ -1,89 +1,95 @@
-//! Native raw-tree-sitter metric path (rca-free), parameterized by language.
+//! Native raw-tree-sitter metric path (rca-free).
 //!
-//! Grammars are vendored and statically linked (see `build.rs` and `vendor/`), and
-//! metrics are computed by walking the raw tree-sitter tree rather than going
-//! through `rust-code-analysis`. The shared algorithms live in [`metrics`] and
-//! [`complexity`]; the per-language node kinds they consult live in [`rules`].
+//! The flow mirrors how a file is actually processed:
 //!
-//! A language is native once it has both a vendored grammar and a rule set — see
-//! [`supports`]. Everything else still routes through rca.
+//! ```text
+//! Language detected (sources.rs)
+//!        │
+//!        ▼
+//! lang::for_language(lang)      ← the only branch on Language
+//!        │
+//!        ▼
+//! impl NativeLanguage           ← language-specific glue
+//!        │  calls
+//!        ▼
+//! analysis::* / complexity::*   ← pure (rules, tree, source); never see a Language
+//!        │
+//!        ▼
+//! glue assembles the results
+//! ```
+//!
+//! [`analyze`] does the dispatch and the parse **once per file**; the resulting
+//! [`Analysis`] then answers each metric without re-parsing.
 #![allow(dead_code)]
 
+pub mod analysis;
 pub mod complexity;
-pub mod metrics;
+pub mod lang;
 pub mod rules;
 
-pub use complexity::{function_cognitive, function_cyclomatic};
-pub use metrics::{file_functions, file_lines, function_lines, function_nargs};
-
-use tree_sitter::{Node, Parser, Tree};
-use tree_sitter_language::LanguageFn;
+use tree_sitter::{Parser, Tree};
 
 use crate::language::Language;
-use rules::Rules;
+use lang::NativeLanguage;
 
-extern "C" {
-    /// Entry point of the vendored, statically-linked Rust grammar (see `build.rs`).
-    fn tree_sitter_rust() -> *const ();
-}
-
-/// The vendored grammar for `lang`, or `None` when it is not vendored yet.
-fn grammar(lang: Language) -> Option<LanguageFn> {
-    match lang {
-        Language::Rust => Some(unsafe { LanguageFn::from_raw(tree_sitter_rust) }),
-        _ => None,
-    }
-}
-
-/// Whether ratchet can measure `lang` natively: it needs both a vendored grammar
-/// and a rule set. Languages without both still route through rca.
+/// Whether ratchet can measure `lang` natively (it has a vendored grammar and a
+/// rule set). Everything else still routes through rca.
 pub fn supports(lang: Language) -> bool {
-    grammar(lang).is_some() && rules::for_language(lang).is_some()
+    lang::for_language(lang).is_some()
 }
 
-/// Parse `source` for `lang` into a raw tree-sitter syntax tree, or `None` if the
-/// language is not native or the source produced no tree.
-pub fn parse(lang: Language, source: &[u8]) -> Option<Tree> {
+/// Detect → dispatch → parse, once per file. `None` when the language has no
+/// native implementation or the source produced no tree.
+pub fn analyze(lang: Language, source: &[u8]) -> Option<Analysis<'_>> {
+    let implementation = lang::for_language(lang)?;
     let mut parser = Parser::new();
-    parser.set_language(&grammar(lang)?.into()).ok()?;
-    parser.parse(source, None)
+    parser.set_language(&implementation.grammar().into()).ok()?;
+    let tree = parser.parse(source, None)?;
+    Some(Analysis { implementation, tree, source })
 }
 
-/// Parse `source` and return both the tree and `lang`'s rule set, or `None` when
-/// the language is not native. The common entry point for the metric functions.
-pub(crate) fn parse_with_rules(lang: Language, source: &[u8]) -> Option<(Tree, &'static Rules)> {
-    let rules = rules::for_language(lang)?;
-    Some((parse(lang, source)?, rules))
+/// One parsed file bound to its language implementation. Each accessor delegates
+/// to that implementation's glue, which in turn calls the shared building blocks —
+/// so the tree is parsed once and no metric code branches on the language.
+pub struct Analysis<'a> {
+    implementation: &'static dyn NativeLanguage,
+    tree: Tree,
+    source: &'a [u8],
 }
 
-/// The entity name for a function node, matching rca's default
-/// `get_func_space_name`: the node's `name` field text, or `"<anonymous>"` when it
-/// has none. Note rca does **not** qualify methods by their type.
-pub(crate) fn function_name(node: &Node, source: &[u8]) -> String {
-    match node.child_by_field_name("name") {
-        Some(name) => std::str::from_utf8(&source[name.byte_range()]).unwrap_or("<anonymous>").to_string(),
-        None => "<anonymous>".to_string(),
+impl Analysis<'_> {
+    /// The parsed syntax tree (exposed for tests and debugging).
+    pub fn tree(&self) -> &Tree {
+        &self.tree
     }
-}
 
-/// Visit every function space in the tree in pre-order, invoking `f(name, node)`.
-/// Order and naming mirror rca's `visit_function_spaces` + `function_entity_name`,
-/// so entities line up one-to-one with the rca path. The node handle lets metric
-/// collectors compute per-function values.
-pub fn visit_functions(rules: &Rules, tree: &Tree, source: &[u8], f: &mut impl FnMut(&str, Node)) {
-    fn recurse(rules: &Rules, node: Node, source: &[u8], f: &mut impl FnMut(&str, Node)) {
-        let mut i = 0;
-        while i < node.named_child_count() {
-            let child = node.named_child(i).expect("named_child within count");
-            if rules.is_function(child.kind()) {
-                let name = function_name(&child, source);
-                f(&name, child);
-            }
-            recurse(rules, child, source, f);
-            i += 1;
-        }
+    pub fn file_lines(&self) -> u64 {
+        self.implementation.file_lines(&self.tree, self.source)
     }
-    recurse(rules, tree.root_node(), source, f);
+
+    pub fn file_functions(&self) -> u64 {
+        self.implementation.file_functions(&self.tree, self.source)
+    }
+
+    pub fn function_lines(&self) -> Vec<(String, u64)> {
+        self.implementation.function_lines(&self.tree, self.source)
+    }
+
+    pub fn function_nargs(&self) -> Vec<(String, u64)> {
+        self.implementation.function_nargs(&self.tree, self.source)
+    }
+
+    pub fn function_cyclomatic(&self) -> Vec<(String, u64)> {
+        self.implementation.function_cyclomatic(&self.tree, self.source)
+    }
+
+    pub fn function_cognitive(&self) -> Vec<(String, u64)> {
+        self.implementation.function_cognitive(&self.tree, self.source)
+    }
+
+    pub fn function_entities(&self) -> Vec<String> {
+        self.implementation.function_entities(&self.tree, self.source)
+    }
 }
 
 #[cfg(test)]
@@ -97,16 +103,15 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_finds_a_function_item() {
-        let tree = parse(Language::Rust, b"fn add(a: i32, b: i32) -> i32 { a + b }").expect("Rust source should parse");
-        let root = tree.root_node();
-        assert_eq!(root.kind(), "source_file");
-        let mut cursor = root.walk();
-        assert!(root.children(&mut cursor).any(|n| n.kind() == "function_item"));
+    fn test_analyze_parses_once_and_answers_metrics() {
+        let a = analyze(Language::Rust, b"fn add(a: i32, b: i32) -> i32 { a + b }").expect("Rust is native");
+        assert_eq!(a.tree().root_node().kind(), "source_file");
+        assert_eq!(a.file_functions(), 1);
+        assert_eq!(a.function_nargs(), vec![("add".to_string(), 2)]);
     }
 
     #[test]
-    fn test_parse_returns_none_for_a_language_without_a_grammar() {
-        assert!(parse(Language::Python, b"def f(): pass").is_none());
+    fn test_analyze_returns_none_for_a_language_without_a_grammar() {
+        assert!(analyze(Language::Python, b"def f(): pass").is_none());
     }
 }

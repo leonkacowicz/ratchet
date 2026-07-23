@@ -3,20 +3,16 @@
 //! are language-agnostic; the node kinds they match come from the language's
 //! [`Rules`].
 
-use tree_sitter::Node;
+use tree_sitter::{Node, Tree};
 
+use super::analysis::{function_name, visit_functions};
 use super::rules::Rules;
-use super::{function_name, parse_with_rules, visit_functions};
-use crate::language::Language;
 
 /// Per-function cyclomatic complexity as `(entity_name, value)` in walk order —
-/// matching rca's `cyclomatic_sum`. Empty when the language is not native.
-pub fn function_cyclomatic(lang: Language, source: &[u8]) -> Vec<(String, u64)> {
-    let Some((tree, rules)) = parse_with_rules(lang, source) else {
-        return Vec::new();
-    };
+/// matching rca's `cyclomatic_sum`.
+pub fn function_cyclomatic(rules: &Rules, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
     let mut out = Vec::new();
-    visit_functions(rules, &tree, source, &mut |name, node| out.push((name.to_string(), cyclomatic_of(&node, rules))));
+    visit_functions(rules, tree, source, &mut |name, node| out.push((name.to_string(), cyclomatic_of(&node, rules))));
     out
 }
 
@@ -72,12 +68,8 @@ struct CogSpace {
 }
 
 /// Per-function cognitive complexity as `(entity_name, value)` in walk order —
-/// matching rca's `cognitive_sum` (subtree sum). Empty when the language is not
-/// native.
-pub fn function_cognitive(lang: Language, source: &[u8]) -> Vec<(String, u64)> {
-    let Some((tree, rules)) = parse_with_rules(lang, source) else {
-        return Vec::new();
-    };
+/// matching rca's `cognitive_sum` (subtree sum).
+pub fn function_cognitive(rules: &Rules, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
     let mut out = Vec::new();
     let ctx = CogCtx { nesting: 0, depth: 0, lambda: 0, in_fn: false };
     Cog { source, rules, out: &mut out }.walk(&tree.root_node(), ctx, &mut CogSpace::default());
@@ -216,13 +208,22 @@ fn eval_boolean(op: BoolOp, space: &mut CogSpace) {
 
 #[cfg(test)]
 mod tests {
+    use super::super::rules::RUST;
     use super::*;
+    use crate::language::Language;
+    use crate::native::analyze;
+
+    /// Parse Rust source and run `f` against the pure building block.
+    fn on_rust<T>(src: &[u8], f: impl Fn(&Rules, &Tree, &[u8]) -> T) -> T {
+        let a = analyze(Language::Rust, src).expect("Rust is native");
+        f(&RUST, a.tree(), src)
+    }
 
     #[test]
     fn test_cyclomatic_sums_subtree_including_nested_closures() {
         let src = b"fn simple() {}\nfn one_if(x: bool) { if x {} }\nfn two(a: bool, b: bool) { if a && b {} }\nfn nested() { let c = || { if true {} }; if false {} }\n";
         assert_eq!(
-            function_cyclomatic(Language::Rust, src),
+            on_rust(src, function_cyclomatic),
             vec![("simple".to_string(), 1), ("one_if".to_string(), 2), ("two".to_string(), 3), ("nested".to_string(), 4), ("<anonymous>".to_string(), 2)]
         );
     }
@@ -231,12 +232,6 @@ mod tests {
     fn test_cognitive_weights_nesting_and_booleans() {
         // outer if: +1; `&&`: +1; inner if at nesting 1: +2. total 4.
         let src = b"fn f(a: bool, b: bool) {\n    if a && b {\n        if a { }\n    }\n}\n";
-        assert_eq!(function_cognitive(Language::Rust, src), vec![("f".to_string(), 4)]);
-    }
-
-    #[test]
-    fn test_complexity_is_empty_for_a_language_without_a_grammar() {
-        assert!(function_cyclomatic(Language::Python, b"def f(): pass").is_empty());
-        assert!(function_cognitive(Language::Python, b"def f(): pass").is_empty());
+        assert_eq!(on_rust(src, function_cognitive), vec![("f".to_string(), 4)]);
     }
 }

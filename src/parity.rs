@@ -2,7 +2,7 @@
 //! test-only rca-parity harness (see the migration epic).
 //!
 //! A metric can be computed two ways — natively over a raw tree-sitter tree, or
-//! via rca. [`use_native`] / [`MIGRATED`] decide which the production report uses
+//! via rca. [`MIGRATED`] and `native::supports` decide which the production report uses
 //! for a given language; [`file_level_metrics`] and [`function_metric_values`] are
 //! the production entry points. Fully-migrated languages (Rust today) never parse
 //! through rca — their `top` is `None`. A metric only joins `MIGRATED` once the
@@ -12,8 +12,7 @@
 use rust_code_analysis::FuncSpace;
 
 use crate::collectors::structural::{args_for, cognitive_for, cyclomatic_for, function_count_for, function_entity_name, sloc_for, visit_function_spaces};
-use crate::language::Language;
-use crate::native;
+use crate::native::Analysis;
 
 /// A structural metric being migrated from rca to the native path.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,43 +55,41 @@ impl Metric {
     }
 }
 
-/// Whether production should compute `metric` for `lang` via the native path: it
-/// must be migrated *and* the language must have a native implementation (a
-/// vendored grammar plus a rule set). Everything else still routes through rca.
-pub fn use_native(metric: Metric, lang: Language) -> bool {
-    metric.backend() == Backend::Native && native::supports(lang)
-}
-
-/// File-level metric values `(file_lines, file_functions)` for one file,
-/// dispatching each metric to the native path when migrated for `lang` and to
-/// rca otherwise. `top` is the rca parse for non-native languages and `None` for
-/// Rust (which never touches rca); the native path works from `source` alone.
-pub fn file_level_metrics(lang: Language, source: &[u8], top: Option<&FuncSpace>) -> (u64, u64) {
-    let file_lines = if use_native(Metric::FileLines, lang) { native::file_lines(lang, source).unwrap_or(0) } else { top.map_or(0, sloc_for) };
-    let file_functions =
-        if use_native(Metric::FileFunctions, lang) { native::file_functions(lang, source).unwrap_or(0) } else { top.map_or(0, function_count_for) };
+/// File-level metric values `(file_lines, file_functions)` for one file. `native`
+/// is the language's parsed [`Analysis`] when it has a native implementation, and
+/// `top` the rca parse otherwise — exactly one of the two is `Some`. Note this
+/// takes no `Language`: the dispatch already happened.
+pub fn file_level_metrics(native: Option<&Analysis>, top: Option<&FuncSpace>) -> (u64, u64) {
+    let file_lines = match native {
+        Some(a) if Metric::FileLines.backend() == Backend::Native => a.file_lines(),
+        _ => top.map_or(0, sloc_for),
+    };
+    let file_functions = match native {
+        Some(a) if Metric::FileFunctions.backend() == Backend::Native => a.file_functions(),
+        _ => top.map_or(0, function_count_for),
+    };
     (file_lines, file_functions)
 }
 
 /// Per-function values `(entity_name, value)` in walk order for a function-level
-/// `metric` — via the native path when the metric is migrated for `lang`, rca
-/// otherwise. `top` is `None` for Rust (fully native). Entity names are bare (the
-/// caller prefixes the file path), matching the rca function loop in `structural.rs`.
-pub fn function_metric_values(metric: Metric, lang: Language, source: &[u8], top: Option<&FuncSpace>) -> Vec<(String, u64)> {
-    if use_native(metric, lang) {
-        native_function_metric(metric, lang, source)
-    } else {
-        top.map_or_else(Vec::new, |t| rca_function_metric(metric, t))
+/// `metric` — from the native [`Analysis`] when the metric is migrated, rca
+/// otherwise. Entity names are bare (the caller prefixes the file path), matching
+/// the rca function loop in `structural.rs`.
+pub fn function_metric_values(metric: Metric, native: Option<&Analysis>, top: Option<&FuncSpace>) -> Vec<(String, u64)> {
+    match native {
+        Some(a) if metric.backend() == Backend::Native => native_function_metric(metric, a),
+        _ => top.map_or_else(Vec::new, |t| rca_function_metric(metric, t)),
     }
 }
 
-/// Native per-function values for a function-level `metric`.
-fn native_function_metric(metric: Metric, lang: Language, source: &[u8]) -> Vec<(String, u64)> {
+/// Native per-function values for a function-level `metric`, off an already
+/// parsed [`Analysis`].
+fn native_function_metric(metric: Metric, native: &Analysis) -> Vec<(String, u64)> {
     match metric {
-        Metric::FunctionArgs => native::function_nargs(lang, source),
-        Metric::FunctionCyclomatic => native::function_cyclomatic(lang, source),
-        Metric::FunctionLines => native::function_lines(lang, source),
-        Metric::FunctionCognitive => native::function_cognitive(lang, source),
+        Metric::FunctionArgs => native.function_nargs(),
+        Metric::FunctionCyclomatic => native.function_cyclomatic(),
+        Metric::FunctionLines => native.function_lines(),
+        Metric::FunctionCognitive => native.function_cognitive(),
         other => panic!("{other:?} is not a native function-level metric"),
     }
 }
@@ -120,6 +117,8 @@ mod tests {
     use std::path::Path;
 
     use super::*;
+    use crate::language::Language;
+    use crate::native;
 
     /// Raw (pre-threshold) metric values keyed by entity (a file path for
     /// file-level metrics; `path::name` for function-level ones).
@@ -135,21 +134,21 @@ mod tests {
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.loc.sloc().round() as u64),
-                    Backend::Native => native::file_lines(Language::Rust, source),
+                    Backend::Native => native::analyze(Language::Rust, source).map(|a| a.file_lines()),
                 },
             ),
             Metric::FileFunctions => single(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.nom.total().round() as u64),
-                    Backend::Native => native::file_functions(Language::Rust, source),
+                    Backend::Native => native::analyze(Language::Rust, source).map(|a| a.file_functions()),
                 },
             ),
             Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines | Metric::FunctionCognitive => keyed_by_path(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
-                    Backend::Native => native_function_metric(metric, Language::Rust, source),
+                    Backend::Native => native::analyze(Language::Rust, source).map(|a| native_function_metric(metric, &a)).unwrap_or_default(),
                 },
             ),
         }
@@ -224,15 +223,16 @@ mod tests {
     /// Assert the native function walk matches rca's function list on `source`.
     fn assert_function_walk_parity(source: &[u8], path: &Path) {
         let rca = Language::Rust.parse_metrics(source.to_vec(), path).map(|top| rca_function_entities(&top)).unwrap_or_default();
-        let native = native::metrics::function_entities(Language::Rust, source);
+        let native = native::analyze(Language::Rust, source).map(|a| a.function_entities()).unwrap_or_default();
         assert_eq!(native, rca, "function-walk divergence in {}", path.display());
     }
 
     #[test]
-    fn test_use_native_requires_migrated_metric_and_supported_language() {
-        assert!(use_native(Metric::FileLines, Language::Rust));
+    fn test_native_dispatch_covers_rust_only_for_now() {
+        assert!(native::supports(Language::Rust));
         // Never native for a language whose grammar isn't vendored yet.
-        assert!(!use_native(Metric::FileLines, Language::Python));
+        assert!(!native::supports(Language::Python));
+        assert_eq!(Metric::FileLines.backend(), Backend::Native);
     }
 
     #[test]

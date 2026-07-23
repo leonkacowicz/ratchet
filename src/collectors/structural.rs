@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::collectors::Collector;
 use crate::language::Language;
+use crate::native;
 use crate::parity::{file_level_metrics, function_metric_values, Metric};
 use crate::report::CategoryMap;
 use crate::sources::Sources;
@@ -77,19 +78,19 @@ impl Structural {
         let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
         let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
         let source_bytes = source.into_bytes();
-        // rca now backs only the languages not yet migrated to the native path.
-        // Rust is fully native (all metrics verified at parity), so it is never
-        // parsed through rca — a `None` `top` flows straight to the native path.
-        let top = match unit.lang {
-            Language::Rust => None,
-            _ => match unit.lang.parse_metrics(source_bytes.clone(), unit.path) {
+        // Detect -> dispatch -> parse, once. A language with a native
+        // implementation never touches rca; the rest still parse through it.
+        let native = native::analyze(unit.lang, &source_bytes);
+        let top = match native {
+            Some(_) => None,
+            None => match unit.lang.parse_metrics(source_bytes.clone(), unit.path) {
                 Some(parsed) => Some(parsed),
                 None => return Ok(()),
             },
         };
 
         let rel = &unit.rel;
-        let (file_lines, file_functions) = file_level_metrics(unit.lang, &source_bytes, top.as_ref());
+        let (file_lines, file_functions) = file_level_metrics(native.as_ref(), top.as_ref());
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
         self.record(violations, CATEGORY_FILE_FUNCTIONS, rel.to_string(), file_functions);
 
@@ -103,7 +104,7 @@ impl Structural {
             (Metric::FunctionArgs, CATEGORY_FUNCTION_ARGS),
         ];
         for (metric, category) in function_metrics {
-            for (name, value) in function_metric_values(metric, unit.lang, &source_bytes, top.as_ref()) {
+            for (name, value) in function_metric_values(metric, native.as_ref(), top.as_ref()) {
                 self.record(violations, category, format!("{rel}::{name}"), value);
             }
         }

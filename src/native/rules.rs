@@ -28,8 +28,6 @@
 //! one known case that will need it is C/C++, whose names and argument lists hang
 //! off a `declarator` rather than a `name` field.
 
-use crate::language::Language;
-
 /// The node kinds that drive each metric for one language.
 pub struct Rules {
     /// Kinds that form a function space (functions, methods, closures/lambdas).
@@ -76,7 +74,7 @@ impl Rules {
 }
 
 /// Rust — the reference implementation, verified byte-for-byte against rca.
-static RUST: Rules = Rules {
+pub static RUST: Rules = Rules {
     function_kinds: &["function_item", "closure_expression"],
     fn_kinds: &["function_item"],
     lambda_kinds: &["closure_expression"],
@@ -96,30 +94,14 @@ static RUST: Rules = Rules {
     else_if_parent: Some("else_clause"),
 };
 
-/// The rule set for `lang`, or `None` when it has no native implementation yet
-/// (those languages still route through rca).
-pub fn for_language(lang: Language) -> Option<&'static Rules> {
-    match lang {
-        Language::Rust => Some(&RUST),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_rust_has_rules_and_other_languages_do_not_yet() {
-        assert!(for_language(Language::Rust).is_some());
-        assert!(for_language(Language::Python).is_none());
-    }
-
-    #[test]
     fn test_is_function_matches_rust_function_spaces() {
-        let rust = for_language(Language::Rust).expect("Rust rules");
-        assert!(rust.is_function("function_item"));
-        assert!(rust.is_function("closure_expression"));
-        assert!(!rust.is_function("function_signature_item"));
+        assert!(RUST.is_function("function_item"));
+        assert!(RUST.is_function("closure_expression"));
+        assert!(!RUST.is_function("function_signature_item"));
     }
 }
