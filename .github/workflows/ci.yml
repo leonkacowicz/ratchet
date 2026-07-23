@@ -1,0 +1,80 @@
+name: CI
+
+# Build & test the code, then run ratchet's quality gate against itself
+# ("self-hosted": the gate is the project's own binary, not a third-party
+# code-quality service). Runs on GitHub-hosted runners.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build, lint & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Tests
+        run: cargo test --all
+
+      # Hand the freshly built binary to the quality job so it doesn't recompile
+      # the (slow) rust-code-analysis dependency a second time.
+      - name: Upload ratchet binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratchet
+          path: target/release/ratchet
+          if-no-files-found: error
+
+  quality:
+    name: Code-quality ratchet (self-hosted)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so `git show <base>:quality-report.json` can resolve the
+          # baseline report during `ratchet compare`.
+          fetch-depth: 0
+
+      - name: Download ratchet binary
+        uses: actions/download-artifact@v4
+        with:
+          name: ratchet
+          path: bin
+
+      - run: chmod +x bin/ratchet
+
+      # Freshness: the committed report must match the current codebase.
+      - name: Report is fresh
+        run: ./bin/ratchet check --root .
+
+      # Regression: no metric may worsen versus the PR's base branch. Skipped on
+      # push (there is no base to compare against there); the base of the very
+      # first PR has no report yet, which ratchet treats as bootstrap mode.
+      - name: No quality regression vs base
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          ./bin/ratchet compare --root . --base "origin/${{ github.base_ref }}"

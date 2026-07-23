@@ -13,8 +13,9 @@ the code worse along those metrics while always allowing improvement. The point 
 one-way ratchet: pre-existing debt is grandfathered but may only ever shrink.
 
 It was extracted from the `xtask` quality gate of **sqltgen** (a separate, public project);
-this repo is the standalone, generalized home for that tool. This repo is **private and
-unpublished** — there is no public remote to leak into.
+this repo is the standalone, generalized home for that tool. It is **public** at
+`github.com/leonkacowicz/ratchet`, so treat everything here as world-readable — including
+this file and the `issues/` tracker.
 
 ---
 

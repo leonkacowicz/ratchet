@@ -1,5 +1,7 @@
 # ratchet
 
+[![CI](https://github.com/leonkacowicz/ratchet/actions/workflows/ci.yml/badge.svg)](https://github.com/leonkacowicz/ratchet/actions/workflows/ci.yml)
+
 A language-agnostic **code-quality ratchet**. It snapshots structural metrics of a
 codebase into a committed `quality-report.json`, and in CI it blocks any change that
 makes the code *worse* along those metrics — while always allowing improvement.
@@ -66,6 +68,23 @@ and skips (bootstrap mode) if the baseline has no report yet.
 
 Thresholds may not change in the same commit that adds a violation — a threshold edit
 between baseline and HEAD is rejected, forcing it into its own reviewable PR.
+
+## Continuous integration
+
+The [`CI` workflow](.github/workflows/ci.yml) builds, lints and tests the code, then runs
+ratchet's quality gate **against ratchet itself** — the gate is the project's own freshly
+built binary, not a third-party code-quality service:
+
+1. **Build, lint & test** — `cargo fmt --check`, `cargo clippy -D warnings`,
+   `cargo build --release --locked`, `cargo test`. The release binary is passed to the
+   next job as an artifact so the (slow) `rust-code-analysis` dependency compiles once.
+2. **Code-quality ratchet** — `ratchet check` fails the build if the committed
+   `quality-report.json` is stale, and on pull requests `ratchet compare` fails it if any
+   metric regresses against the base branch.
+
+It runs on GitHub-hosted runners on every push to `main` and every pull request. To wire
+the same gate into another project, drop the two `ratchet` steps into your pipeline after
+building the binary (or `cargo install --git https://github.com/leonkacowicz/ratchet`).
 
 ## Status
 
