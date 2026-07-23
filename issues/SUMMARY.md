@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 24 |
+| backlog | 23 |
 | ongoing | 4 |
-| done | 15 |
+| done | 16 |
 | **total** | **43** |
 
 ## Hierarchies
@@ -53,10 +53,10 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 55% (18/33 pts · 7/10 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 70% (23/33 pts · 8/10 done) · _medium_ · ongoing
 
 - [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
-- [ ] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](backlog/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md) _(backlog)_
+- [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](done/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](done/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
 - [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](backlog/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(backlog)_
