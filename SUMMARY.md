@@ -5,8 +5,8 @@
 
 | State | Count |
 |---|---:|
-| backlog | 27 |
-| ongoing | 5 |
+| backlog | 26 |
+| ongoing | 6 |
 | done | 19 |
 | **total** | **51** |
 
@@ -50,7 +50,7 @@
 
 - [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
 - [ ] [#9gkaehf Drop the rust-code-analysis dependency](backlog/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(backlog)_
-- [ ] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](backlog/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md) _(backlog)_
+- [ ] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](ongoing/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md) _(ongoing)_
 - [ ] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](backlog/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md) _(backlog)_
 - [x] [#knau82g Generalize the native layer to be language-parameterized](done/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
 - [ ] [#q6dbjtq Native metrics for Python (vendor tree-sitter-python)](backlog/q6dbjtq-native-metrics-for-python-vendor-tree-sitter-python.md) _(backlog)_
