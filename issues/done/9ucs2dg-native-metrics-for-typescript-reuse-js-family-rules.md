@@ -13,10 +13,13 @@ JavaScript issue. Mostly grammar-vendoring + verification.
 ## Notes
 - **Rules fully shared with JavaScript** — rca applies one `js_cognitive!` macro and identical
   space/cyclomatic/non-arg sets to JS, TS and TSX, so `TS_FAMILY` derives from the JS base.
-- **One rca quirk reproduced:** TS's naming fallback compares the parent's kind id against the
-  *Mozjs* enum; ids 153/236 are `Keyof`/`AssignmentExpression` in TypeScript, neither of which
-  has the `name`/`key` field it then reads — so the fallback never fires and anonymous functions
-  stay `"<anonymous>"` (unlike JS). Encoded as `name_of: default_function_name`.
+- **One rca bug found, reproduced, then dropped:** TS's naming fallback compares the parent's
+  kind id against the *Mozjs* enum; ids 153/236 are `Keyof`/`AssignmentExpression` in TypeScript,
+  neither of which has the `name`/`key` field it then reads — so the fallback never fires and
+  anonymous functions stay `"<anonymous>"` (unlike JS). Parity was proved against that first;
+  ratchet then **stopped reproducing it**, so TS names anonymous functions from their
+  `variable_declarator`/`pair` like JavaScript. Pinned by a golden test; file-level metrics keep
+  rca parity.
 - Corpus: `example_constructs.ts` (every function-space kind, control structure, boolean
   sequence, nesting case, plus TS-only types/generics/enums/interfaces).
 - Vendor **tree-sitter-typescript** (typescript parser) at rca's version (`0.23.2`).
