@@ -11,18 +11,26 @@ Extract the parts that are genuinely shared (the algorithms) from the parts that
 its vendored grammar.
 
 ## Acceptance criteria
-- [ ] `build.rs` compiles N vendored grammars; a `Language → LanguageFn` dispatch replaces the
-      single `tree_sitter_rust()` extern
-- [ ] `native::parse(lang, source)` replaces `parse_rust`; the walk and the six metric functions
-      take a `Language`
-- [ ] Per-language rules expressed as data/impl (function-space kinds, decision-point kinds,
-      cognitive nesting/flat/reset kinds, non-arg kinds) rather than inline literals
-- [ ] Rust behaviour is byte-identical afterwards — the existing parity + corpus tests still pass
-      and `quality-report.json` is unchanged
-- [ ] `use_native` stops hardcoding `lang == Language::Rust` and instead asks whether the language
-      has a native rule set
+- [x] `build.rs` compiles N vendored grammars (reusable `compile_grammar` helper); a
+      `Language → LanguageFn` dispatch (`native::grammar`) replaces the bare extern
+- [x] `native::parse(lang, source)` replaces `parse_rust`; the walk and all six metric functions
+      take a `Language` (`native::{file_lines, file_functions, function_lines, function_nargs,
+      function_cyclomatic, function_cognitive}`)
+- [x] Per-language rules expressed as data — `native::rules::Rules` (function/fn/lambda kinds,
+      non-arg kinds, decision kinds, cognitive nesting/flat/labeled/reset/binary/unary kinds,
+      `else_if_parent`) with a `for_language` lookup
+- [x] Rust behaviour byte-identical — all parity + corpus tests pass, `quality-report.json`
+      unchanged, `check`/`compare` green
+- [x] `use_native` now asks `native::supports(lang)` (vendored grammar + rule set) instead of
+      hardcoding Rust
 
 ## Notes
+- **Delivered layout:** `native/mod.rs` (grammar dispatch, parse, naming, walk),
+  `native/rules.rs` (per-language kind sets), `native/metrics.rs` (SLOC/counts/nargs),
+  `native/complexity.rs` (cyclomatic/cognitive). Split four ways so each file stays under
+  ratchet's own `file_lines`/`file_functions` thresholds as languages are added.
+- Adding a language is now: vendor its grammar + one `compile_grammar` call, one `grammar()`
+  match arm, and one `Rules` entry — plus verifying parity via the existing harness.
 - **Shared vs per-language** (from reading rca): the *algorithms* are shared — space walk,
   file/function SLOC (node row spans), function count, nargs (`parameters` children minus
   non-arg kinds), cyclomatic (base 1 + nested spaces + decision points), cognitive
