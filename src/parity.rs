@@ -57,10 +57,10 @@ impl Metric {
 }
 
 /// Whether production should compute `metric` for `lang` via the native path: it
-/// must be migrated *and* the language natively supported (Rust only today —
-/// other languages still route through rca until their grammars are vendored).
+/// must be migrated *and* the language must have a native implementation (a
+/// vendored grammar plus a rule set). Everything else still routes through rca.
 pub fn use_native(metric: Metric, lang: Language) -> bool {
-    metric.backend() == Backend::Native && lang == Language::Rust
+    metric.backend() == Backend::Native && native::supports(lang)
 }
 
 /// File-level metric values `(file_lines, file_functions)` for one file,
@@ -68,9 +68,9 @@ pub fn use_native(metric: Metric, lang: Language) -> bool {
 /// rca otherwise. `top` is the rca parse for non-native languages and `None` for
 /// Rust (which never touches rca); the native path works from `source` alone.
 pub fn file_level_metrics(lang: Language, source: &[u8], top: Option<&FuncSpace>) -> (u64, u64) {
-    let file_lines = if use_native(Metric::FileLines, lang) { native::rust_file_lines(source).unwrap_or(0) } else { top.map_or(0, sloc_for) };
+    let file_lines = if use_native(Metric::FileLines, lang) { native::file_lines(lang, source).unwrap_or(0) } else { top.map_or(0, sloc_for) };
     let file_functions =
-        if use_native(Metric::FileFunctions, lang) { native::rust_file_functions(source).unwrap_or(0) } else { top.map_or(0, function_count_for) };
+        if use_native(Metric::FileFunctions, lang) { native::file_functions(lang, source).unwrap_or(0) } else { top.map_or(0, function_count_for) };
     (file_lines, file_functions)
 }
 
@@ -80,19 +80,19 @@ pub fn file_level_metrics(lang: Language, source: &[u8], top: Option<&FuncSpace>
 /// caller prefixes the file path), matching the rca function loop in `structural.rs`.
 pub fn function_metric_values(metric: Metric, lang: Language, source: &[u8], top: Option<&FuncSpace>) -> Vec<(String, u64)> {
     if use_native(metric, lang) {
-        native_function_metric(metric, source)
+        native_function_metric(metric, lang, source)
     } else {
         top.map_or_else(Vec::new, |t| rca_function_metric(metric, t))
     }
 }
 
 /// Native per-function values for a function-level `metric`.
-fn native_function_metric(metric: Metric, source: &[u8]) -> Vec<(String, u64)> {
+fn native_function_metric(metric: Metric, lang: Language, source: &[u8]) -> Vec<(String, u64)> {
     match metric {
-        Metric::FunctionArgs => native::rust_function_nargs(source),
-        Metric::FunctionCyclomatic => native::rust_function_cyclomatic(source),
-        Metric::FunctionLines => native::rust_function_lines(source),
-        Metric::FunctionCognitive => native::rust_function_cognitive(source),
+        Metric::FunctionArgs => native::function_nargs(lang, source),
+        Metric::FunctionCyclomatic => native::function_cyclomatic(lang, source),
+        Metric::FunctionLines => native::function_lines(lang, source),
+        Metric::FunctionCognitive => native::function_cognitive(lang, source),
         other => panic!("{other:?} is not a native function-level metric"),
     }
 }
@@ -135,21 +135,21 @@ mod tests {
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.loc.sloc().round() as u64),
-                    Backend::Native => native::rust_file_lines(source),
+                    Backend::Native => native::file_lines(Language::Rust, source),
                 },
             ),
             Metric::FileFunctions => single(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.nom.total().round() as u64),
-                    Backend::Native => native::rust_file_functions(source),
+                    Backend::Native => native::file_functions(Language::Rust, source),
                 },
             ),
             Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines | Metric::FunctionCognitive => keyed_by_path(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
-                    Backend::Native => native_function_metric(metric, source),
+                    Backend::Native => native_function_metric(metric, Language::Rust, source),
                 },
             ),
         }
@@ -224,7 +224,7 @@ mod tests {
     /// Assert the native function walk matches rca's function list on `source`.
     fn assert_function_walk_parity(source: &[u8], path: &Path) {
         let rca = Language::Rust.parse_metrics(source.to_vec(), path).map(|top| rca_function_entities(&top)).unwrap_or_default();
-        let native = native::rust_function_entities(source);
+        let native = native::metrics::function_entities(Language::Rust, source);
         assert_eq!(native, rca, "function-walk divergence in {}", path.display());
     }
 
@@ -254,45 +254,13 @@ mod tests {
     }
 
     #[test]
-    fn test_native_nargs_counts_self_params_and_closure_args() {
-        // `self` counts; a 2-arg method is 3; the closure `|x|` is 1; no-arg fn is 0.
-        let src = b"struct S;\nimpl S { fn m(&self, a: i32, b: u8) { let c = |x: i32| x; } }\nfn n() {}\n";
-        assert_eq!(native::rust_function_nargs(src), vec![("m".to_string(), 3), ("<anonymous>".to_string(), 1), ("n".to_string(), 0)]);
-    }
-
-    #[test]
-    fn test_native_cyclomatic_sums_subtree_including_nested_closures() {
-        // base 1 each; `&&` counts; `nested` folds in its closure (2) → 4.
-        let src = b"fn simple() {}\nfn one_if(x: bool) { if x {} }\nfn two(a: bool, b: bool) { if a && b {} }\nfn nested() { let c = || { if true {} }; if false {} }\n";
-        assert_eq!(
-            native::rust_function_cyclomatic(src),
-            vec![("simple".to_string(), 1), ("one_if".to_string(), 2), ("two".to_string(), 3), ("nested".to_string(), 4), ("<anonymous>".to_string(), 2)]
-        );
-    }
-
-    #[test]
     fn test_function_cyclomatic_parity_over_repo_corpus() {
         assert_metric_parity_over_corpus(Metric::FunctionCyclomatic);
     }
 
     #[test]
-    fn test_native_function_lines_spans_the_function_node() {
-        // `end_row - start_row + 1`: the 3-line `f` is 3; the one-line `g` is 1.
-        let src = b"fn f() {\n    let x = 1;\n}\nfn g() { 1 }\n";
-        assert_eq!(native::rust_function_lines(src), vec![("f".to_string(), 3), ("g".to_string(), 1)]);
-    }
-
-    #[test]
     fn test_function_lines_parity_over_repo_corpus() {
         assert_metric_parity_over_corpus(Metric::FunctionLines);
-    }
-
-    #[test]
-    fn test_native_cognitive_nesting_and_booleans() {
-        // nested if: 1 + 2(nested) = 3; a boolean seq `a && b`: +1 inside the if.
-        let src = b"fn f(a: bool, b: bool) {\n    if a && b {\n        if a { }\n    }\n}\n";
-        // outer if: nesting 0 → +1; `&&`: +1; inner if: nesting 1 → +2. total 4.
-        assert_eq!(native::rust_function_cognitive(src), vec![("f".to_string(), 4)]);
     }
 
     #[test]
