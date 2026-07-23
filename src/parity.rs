@@ -26,6 +26,8 @@ pub type EntityValues = BTreeMap<String, u64>;
 pub enum Metric {
     /// Source lines of code for a whole file — rca `loc.sloc()` on the unit.
     FileLines,
+    /// Number of functions in a file — rca `nom.total()` (functions + closures).
+    FileFunctions,
 }
 
 /// Which implementation computes a metric.
@@ -57,6 +59,8 @@ pub fn compute(metric: Metric, backend: Backend, source: &[u8], path: &Path) -> 
     match (metric, backend) {
         (Metric::FileLines, Backend::Rca) => rca_file_lines(source, path),
         (Metric::FileLines, Backend::Native) => native_file_lines(source, path),
+        (Metric::FileFunctions, Backend::Rca) => rca_file_functions(source, path),
+        (Metric::FileFunctions, Backend::Native) => native_file_functions(source, path),
     }
 }
 
@@ -133,6 +137,26 @@ fn native_file_lines(source: &[u8], path: &Path) -> EntityValues {
     out
 }
 
+fn rca_file_functions(source: &[u8], path: &Path) -> EntityValues {
+    let mut out = EntityValues::new();
+    if let Some(top) = Language::Rust.parse_metrics(source.to_vec(), path) {
+        out.insert(path.display().to_string(), top.metrics.nom.total().round() as u64);
+    }
+    out
+}
+
+fn native_file_functions(source: &[u8], path: &Path) -> EntityValues {
+    let mut out = EntityValues::new();
+    if let Some(tree) = native::parse_rust(source) {
+        // rca's `nom.total()` counts exactly the Function-kind spaces
+        // (function_item + closure_expression) — the ones the walk emits.
+        let mut count = 0u64;
+        native::visit_rust_functions(&tree, source, &mut |_name, _node| count += 1);
+        out.insert(path.display().to_string(), count);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,6 +180,16 @@ mod tests {
     }
 
     #[test]
+    fn test_native_file_functions_matches_rca_on_a_snippet() {
+        let src = b"fn a() {}\nfn b() { let c = || 0; }\nstruct S;\nimpl S { fn m(&self) {} }\n";
+        let path = Path::new("snippet.rs");
+        let rca = compute(Metric::FileFunctions, Backend::Rca, src, path);
+        let native = compute(Metric::FileFunctions, Backend::Native, src, path);
+        assert!(!rca.is_empty(), "rca should produce a file_functions value");
+        assert_eq!(native, rca, "native file_functions must match rca");
+    }
+
+    #[test]
     fn test_diff_reports_each_divergent_entity_with_both_values() {
         let rca = EntityValues::from([("a.rs".to_string(), 10), ("b.rs".to_string(), 20)]);
         let native = EntityValues::from([("a.rs".to_string(), 10), ("b.rs".to_string(), 22)]);
@@ -172,11 +206,9 @@ mod tests {
         assert!(diff(Metric::FileLines, &m, &m).is_none());
     }
 
-    /// The parity guarantee: native `file_lines` matches rca on every real Rust
-    /// file in the repo (ratchet's own `src/` plus the example fixture). This is
-    /// what lets `file_lines` flip to the native path.
-    #[test]
-    fn test_file_lines_parity_over_repo_corpus() {
+    /// Run `check_parity(metric, ..)` over every Rust file in the repo (ratchet's
+    /// own `src/` plus the fixtures), panicking on the first divergence report.
+    fn assert_metric_parity_over_corpus(metric: Metric) {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let mut checked = 0;
         for entry in walkdir::WalkDir::new(root.join("src")).into_iter().chain(walkdir::WalkDir::new(root.join("tests/fixtures"))).filter_map(Result::ok) {
@@ -185,12 +217,25 @@ mod tests {
                 continue;
             }
             let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
-            if let Err(report) = check_parity(Metric::FileLines, &source, path) {
+            if let Err(report) = check_parity(metric, &source, path) {
                 panic!("{report}");
             }
             checked += 1;
         }
         assert!(checked > 5, "expected to check several Rust files, checked {checked}");
+    }
+
+    /// The parity guarantee that lets `file_lines` flip to the native path:
+    /// native matches rca on every real Rust file in the repo.
+    #[test]
+    fn test_file_lines_parity_over_repo_corpus() {
+        assert_metric_parity_over_corpus(Metric::FileLines);
+    }
+
+    /// Same guarantee for `file_functions` (function count per file).
+    #[test]
+    fn test_file_functions_parity_over_repo_corpus() {
+        assert_metric_parity_over_corpus(Metric::FileFunctions);
     }
 
     /// Parity on constructs the repo corpus may not exercise: a trait with a
