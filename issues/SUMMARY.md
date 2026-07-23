@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 21 |
+| backlog | 20 |
 | ongoing | 3 |
-| done | 7 |
+| done | 8 |
 | **total** | **31** |
 
 ## Hierarchies
@@ -45,12 +45,12 @@
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ez785p3 Configuration file support](ongoing/ez785p3-configuration-file-support.md) — 55% (6/11 pts · 2/4 done) · _high_ · ongoing
+### [#ez785p3 Configuration file support](ongoing/ez785p3-configuration-file-support.md) — 73% (8/11 pts · 3/4 done) · _high_ · ongoing
 
 - [x] [#4mtrdc7 Define config file format and loader](done/4mtrdc7-define-config-file-format-and-loader.md)
 - [x] [#9h98w7h Configurable source roots and include/exclude globs](done/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
-- [ ] [#w2tdb7m Move metric thresholds into the config file](backlog/w2tdb7m-move-metric-thresholds-into-the-config-file.md) _(backlog)_
+- [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
 ## Backlog
 
