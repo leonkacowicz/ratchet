@@ -20,7 +20,12 @@ globset            = "0.4"
 rust-code-analysis = { git = "https://github.com/mozilla/rust-code-analysis", rev = "37e5d83c056c8cbf827223d5814a93c5218df1a9" }
 serde              = { version = "1", features = ["derive"] }
 serde_json         = { version = "1", features = ["preserve_order"] }
+tree-sitter        = "0.25"
+tree-sitter-language = "0.1"
 walkdir            = "2"
+
+[build-dependencies]
+cc                 = "1"
 
 [dev-dependencies]
 tempfile           = "3"

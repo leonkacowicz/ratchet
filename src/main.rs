@@ -1,6 +1,7 @@
 mod collectors;
 mod config;
 mod language;
+mod native;
 mod ratchet;
 mod report;
 mod sources;

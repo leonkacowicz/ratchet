@@ -490,12 +490,15 @@ name = "ratchet"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "cc",
  "clap",
  "globset",
  "rust-code-analysis",
  "serde",
  "serde_json",
  "tempfile",
+ "tree-sitter",
+ "tree-sitter-language",
  "walkdir",
 ]
 
