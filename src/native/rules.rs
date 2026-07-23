@@ -8,6 +8,25 @@
 //!
 //! Every set mirrors what `rust-code-analysis` matches for that language, since
 //! rca is the parity oracle each migration is verified against.
+//!
+//! # Adding a language
+//!
+//! The metric code is language-agnostic — a new language supplies *data*, not
+//! algorithms:
+//!
+//! 1. Vendor its grammar under `vendor/<grammar>/` (`parser.c`, any
+//!    `scanner.{c,cc}`, the `tree_sitter/` headers, its `LICENSE`) and add one
+//!    `compile_grammar(..)` call in `build.rs`.
+//! 2. Declare its `tree_sitter_<lang>()` extern and add one arm to
+//!    `native::grammar` — that is all [`super::supports`] needs.
+//! 3. Add a `Rules` entry here and map it in [`for_language`].
+//! 4. Verify against rca with the parity harness (`parity`'s corpus tests) and
+//!    add fixtures under `tests/fixtures/` exercising the language's constructs.
+//!
+//! Nothing else should need editing. If a language cannot be expressed by these
+//! fields, prefer adding a field here over branching inside the algorithms — the
+//! one known case that will need it is C/C++, whose names and argument lists hang
+//! off a `declarator` rather than a `name` field.
 
 use crate::language::Language;
 
@@ -33,10 +52,17 @@ pub struct Rules {
     /// Cognitive: kinds that reset the boolean sequence (the JS family does this
     /// per statement; Rust does not).
     pub cog_reset_kinds: &'static [&'static str],
-    /// Cognitive: kinds whose direct `&&`/`||` children form a boolean sequence.
+    /// Cognitive: kinds whose direct boolean-operator children form a sequence.
     pub cog_binary_kinds: &'static [&'static str],
     /// Cognitive: unary kinds that mark the boolean sequence (rca's `not_operator`).
     pub cog_unary_kinds: &'static [&'static str],
+    /// The language's logical-AND operator tokens (`&&`; Python's is `and`).
+    pub bool_and_kinds: &'static [&'static str],
+    /// The language's logical-OR operator tokens (`||`; Python's is `or`).
+    pub bool_or_kinds: &'static [&'static str],
+    /// Kinds a labeled `break`/`continue` carries as its label child (Rust
+    /// `label`; the JS family uses `statement_identifier`).
+    pub label_kinds: &'static [&'static str],
     /// Parent kind marking an `else if`, whose `if` must not add nesting (it is
     /// already scored by the `else`). `None` when the language has no such form.
     pub else_if_parent: Option<&'static str>,
@@ -64,6 +90,9 @@ static RUST: Rules = Rules {
     cog_reset_kinds: &[],
     cog_binary_kinds: &["binary_expression"],
     cog_unary_kinds: &["unary_expression"],
+    bool_and_kinds: &["&&"],
+    bool_or_kinds: &["||"],
+    label_kinds: &["label"],
     else_if_parent: Some("else_clause"),
 };
 

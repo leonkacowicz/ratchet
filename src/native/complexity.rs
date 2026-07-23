@@ -142,14 +142,14 @@ fn cog_apply(node: &Node, ctx: CogCtx, space: &mut CogSpace, rules: &Rules) -> C
         space.structural += ctx.nesting + ctx.depth + ctx.lambda + 1;
         space.bool_op = None;
         child.nesting = ctx.nesting + 1;
-    } else if rules.cog_flat_kinds.contains(&kind) || (rules.cog_labeled_kinds.contains(&kind) && is_labeled(node)) {
+    } else if rules.cog_flat_kinds.contains(&kind) || (rules.cog_labeled_kinds.contains(&kind) && is_labeled(node, rules)) {
         space.structural += 1;
     } else if rules.cog_reset_kinds.contains(&kind) {
         space.bool_op = None;
     } else if rules.cog_unary_kinds.contains(&kind) {
         space.bool_op = Some(BoolOp::Not);
     } else if rules.cog_binary_kinds.contains(&kind) {
-        cog_booleans(node, space);
+        cog_booleans(node, space, rules);
     }
     child
 }
@@ -168,28 +168,33 @@ fn is_else_if(node: &Node, rules: &Rules) -> bool {
     node.parent().is_some_and(|p| p.kind() == parent_kind)
 }
 
-fn is_labeled(node: &Node) -> bool {
-    node.child(1).is_some_and(|c| c.kind() == "label")
+/// Whether a `break`/`continue` carries a label, per the language's label kinds.
+fn is_labeled(node: &Node, rules: &Rules) -> bool {
+    node.child(1).is_some_and(|c| rules.label_kinds.contains(&c.kind()))
 }
 
 /// rca's `compute_booleans`: scan a binary expression's direct `&&`/`||` children,
 /// evaluating each against the running sequence.
-fn cog_booleans(node: &Node, space: &mut CogSpace) {
+fn cog_booleans(node: &Node, space: &mut CogSpace, rules: &Rules) {
     let mut i = 0;
     while i < node.child_count() {
-        if let Some(op) = boolean_op(&node.child(i).expect("child within count")) {
+        if let Some(op) = boolean_op(&node.child(i).expect("child within count"), rules) {
             eval_boolean(op, space);
         }
         i += 1;
     }
 }
 
-/// The boolean operator of a `&&`/`||` token node, if it is one.
-fn boolean_op(node: &Node) -> Option<BoolOp> {
-    match node.kind() {
-        "&&" => Some(BoolOp::And),
-        "||" => Some(BoolOp::Or),
-        _ => None,
+/// The logical operator a token node represents, per the language's operator
+/// kinds, if it is one. (C-family uses `&&`/`||`; Python uses `and`/`or`.)
+fn boolean_op(node: &Node, rules: &Rules) -> Option<BoolOp> {
+    let kind = node.kind();
+    if rules.bool_and_kinds.contains(&kind) {
+        Some(BoolOp::And)
+    } else if rules.bool_or_kinds.contains(&kind) {
+        Some(BoolOp::Or)
+    } else {
+        None
     }
 }
 
