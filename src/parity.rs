@@ -10,7 +10,7 @@
 
 use rust_code_analysis::FuncSpace;
 
-use crate::collectors::structural::{args_for, cyclomatic_for, function_count_for, function_entity_name, sloc_for, visit_function_spaces};
+use crate::collectors::structural::{args_for, cognitive_for, cyclomatic_for, function_count_for, function_entity_name, sloc_for, visit_function_spaces};
 use crate::language::Language;
 use crate::native;
 
@@ -27,6 +27,8 @@ pub enum Metric {
     FunctionCyclomatic,
     /// Source lines per function — rca `loc.sloc()` on the function space.
     FunctionLines,
+    /// Cognitive complexity per function — rca `cognitive_sum` (subtree sum).
+    FunctionCognitive,
 }
 
 /// Which implementation computes a metric.
@@ -38,7 +40,8 @@ pub enum Backend {
 
 /// Metrics whose native implementation has reached rca parity and drives the
 /// production report. Grows as each migration lands.
-pub const MIGRATED: &[Metric] = &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionLines];
+pub const MIGRATED: &[Metric] =
+    &[Metric::FileLines, Metric::FileFunctions, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionLines, Metric::FunctionCognitive];
 
 impl Metric {
     /// The backend that should compute this metric in production: the native
@@ -91,6 +94,7 @@ fn native_function_metric(metric: Metric, source: &[u8]) -> Vec<(String, u64)> {
         Metric::FunctionArgs => native::rust_function_nargs(source),
         Metric::FunctionCyclomatic => native::rust_function_cyclomatic(source),
         Metric::FunctionLines => native::rust_function_lines(source),
+        Metric::FunctionCognitive => native::rust_function_cognitive(source),
         other => panic!("{other:?} is not a native function-level metric"),
     }
 }
@@ -101,6 +105,7 @@ fn rca_function_metric(metric: Metric, top: &FuncSpace) -> Vec<(String, u64)> {
         Metric::FunctionArgs => args_for,
         Metric::FunctionCyclomatic => cyclomatic_for,
         Metric::FunctionLines => sloc_for,
+        Metric::FunctionCognitive => cognitive_for,
         other => panic!("{other:?} is not a function-level metric"),
     };
     let mut out = Vec::new();
@@ -142,7 +147,7 @@ mod tests {
                     Backend::Native => native::rust_file_functions(source),
                 },
             ),
-            Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines => keyed_by_path(
+            Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines | Metric::FunctionCognitive => keyed_by_path(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
@@ -282,6 +287,41 @@ mod tests {
     #[test]
     fn test_function_lines_parity_over_repo_corpus() {
         assert_metric_parity_over_corpus(Metric::FunctionLines);
+    }
+
+    #[test]
+    fn test_native_cognitive_nesting_and_booleans() {
+        // nested if: 1 + 2(nested) = 3; a boolean seq `a && b`: +1 inside the if.
+        let src = b"fn f(a: bool, b: bool) {\n    if a && b {\n        if a { }\n    }\n}\n";
+        // outer if: nesting 0 → +1; `&&`: +1; inner if: nesting 1 → +2. total 4.
+        assert_eq!(native::rust_function_cognitive(src), vec![("f".to_string(), 4)]);
+    }
+
+    #[test]
+    fn test_function_cognitive_parity_over_repo_corpus() {
+        assert_metric_parity_over_corpus(Metric::FunctionCognitive);
+    }
+
+    /// Cognitive parity on constructs the repo corpus may under-exercise, each
+    /// checked against rca: else-if chains, nested functions (depth), labeled
+    /// break/continue, closures inside control flow (lambda), boolean sequences
+    /// (same vs mixed operators, unary `!`), match, and `let ... else`.
+    #[test]
+    fn test_function_cognitive_parity_on_tricky_constructs() {
+        let snippets: &[&[u8]] = &[
+            b"fn f(a: i32) { if a > 0 {} else if a < 0 {} else {} }",
+            b"fn f() { fn g() { for _ in 0..3 { if true {} } } }",
+            b"fn f() { 'outer: for _ in 0..3 { for _ in 0..3 { break 'outer; continue 'outer; } } }",
+            b"fn f(v: Vec<i32>) { if !v.is_empty() { let c = |x: i32| { if x > 0 { x } else { 0 } }; c(1); } }",
+            b"fn f(a: bool, b: bool, c: bool) { let _ = a && b && c; let _ = a && b || c; let _ = !a && b; }",
+            b"fn f(x: Option<i32>) -> i32 { let Some(n) = x else { return 0 }; match n { 0 => 1, _ => 2 } }",
+            b"fn f() { while let Some(_) = None::<i32> { loop { break; } } }",
+        ];
+        for src in snippets {
+            if let Err(report) = check_parity(Metric::FunctionCognitive, src, Path::new("tricky.rs")) {
+                panic!("{report}\n  source: {}", std::str::from_utf8(src).unwrap());
+            }
+        }
     }
 
     #[test]

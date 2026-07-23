@@ -90,21 +90,19 @@ impl Structural {
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
         self.record(violations, CATEGORY_FILE_FUNCTIONS, rel.to_string(), file_functions);
 
-        let mut closure_counter: u32 = 0;
-        visit_function_spaces(&top, &mut |space| {
-            let entity = format!("{rel}::{}", function_entity_name(space, &mut closure_counter));
-            self.record(violations, CATEGORY_FUNCTION_COGNITIVE, entity, cognitive_for(space));
-        });
-        // Migrated function-level metrics dispatch to the native path (Rust) or
-        // rca otherwise; entity names line up with the walk above.
-        for (name, value) in function_metric_values(Metric::FunctionLines, unit.lang, &source_bytes, &top) {
-            self.record(violations, CATEGORY_FUNCTION_LINES, format!("{rel}::{name}"), value);
-        }
-        for (name, value) in function_metric_values(Metric::FunctionCyclomatic, unit.lang, &source_bytes, &top) {
-            self.record(violations, CATEGORY_FUNCTION_CYCLOMATIC, format!("{rel}::{name}"), value);
-        }
-        for (name, value) in function_metric_values(Metric::FunctionArgs, unit.lang, &source_bytes, &top) {
-            self.record(violations, CATEGORY_FUNCTION_ARGS, format!("{rel}::{name}"), value);
+        // Each function-level metric dispatches to the native path for Rust and
+        // to rca otherwise; entity names line up across metrics via the shared
+        // walk order. The dispatch lives in `parity` to keep this file flat.
+        let function_metrics = [
+            (Metric::FunctionLines, CATEGORY_FUNCTION_LINES),
+            (Metric::FunctionCognitive, CATEGORY_FUNCTION_COGNITIVE),
+            (Metric::FunctionCyclomatic, CATEGORY_FUNCTION_CYCLOMATIC),
+            (Metric::FunctionArgs, CATEGORY_FUNCTION_ARGS),
+        ];
+        for (metric, category) in function_metrics {
+            for (name, value) in function_metric_values(metric, unit.lang, &source_bytes, &top) {
+                self.record(violations, category, format!("{rel}::{name}"), value);
+            }
         }
 
         Ok(())
@@ -132,7 +130,7 @@ pub(crate) fn sloc_for(space: &FuncSpace) -> u64 {
     space.metrics.loc.sloc().round() as u64
 }
 
-fn cognitive_for(space: &FuncSpace) -> u64 {
+pub(crate) fn cognitive_for(space: &FuncSpace) -> u64 {
     space.metrics.cognitive.cognitive_sum().round() as u64
 }
 

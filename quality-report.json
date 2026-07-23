@@ -10,7 +10,7 @@
     "module_files": 20
   },
   "totals": {
-    "file_functions": 6,
+    "file_functions": 5,
     "file_lines": 0,
     "function_args": 1,
     "function_cognitive": 2,
@@ -20,7 +20,7 @@
   },
   "violations": {
     "file_functions": {
-      "src/collectors/structural.rs": 6
+      "src/collectors/structural.rs": 5
     },
     "file_lines": {},
     "function_args": {
