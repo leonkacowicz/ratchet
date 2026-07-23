@@ -356,27 +356,54 @@ mod tests {
 
     #[test]
     fn test_javascript_metric_parity_over_corpus() {
-        for metric in
-            [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionCognitive]
-        {
+        for metric in ALL_METRICS {
             assert_metric_parity_over_corpus(metric, Language::JavaScript, "js", 2);
+            assert_metric_parity_over_corpus(metric, Language::JavaScript, "jsx", 1);
         }
     }
 
-    /// TypeScript and TSX reuse the JS-family rules with their own grammars, so
-    /// both must agree with rca on the walk and on every metric.
+    /// TypeScript and TSX keep rca parity for the **file-level** metrics, which do
+    /// not depend on function naming.
+    ///
+    /// The function-level metrics deliberately diverge: ratchet does not reproduce
+    /// rca's two TS/TSX bugs (see `rules::JS_FAMILY`), so entity names and TSX
+    /// cognitive values differ by design. Those are pinned by golden tests below
+    /// instead of by parity.
     #[test]
-    fn test_typescript_and_tsx_parity_over_corpus() {
+    fn test_typescript_and_tsx_file_level_parity_over_corpus() {
         for (lang, ext) in [(Language::TypeScript, "ts"), (Language::Tsx, "tsx")] {
-            let files = corpus(ext);
-            assert!(files.len() >= 2, "expected .{ext} fixtures, found {}", files.len());
-            for (path, source) in &files {
-                assert_function_walk_parity(lang, source, path);
-            }
-            for metric in ALL_METRICS {
+            for metric in [Metric::FileLines, Metric::FileFunctions] {
                 assert_metric_parity_over_corpus(metric, lang, ext, 2);
             }
         }
+    }
+
+    /// Golden: anonymous TS/TSX functions take their name from the enclosing
+    /// `variable_declarator`, exactly as JavaScript's do. rca leaves these
+    /// `"<anonymous>"` in TS/TSX only because its fallback compares against the
+    /// wrong grammar's enum.
+    #[test]
+    fn test_typescript_names_anonymous_functions_like_javascript() {
+        let src = b"const arrow = (x: number): number => x * 2;\nconst expr = function (a: number) { return a; };\n";
+        let names = native::analyze(Language::TypeScript, src).expect("TS is native").function_entities();
+        assert_eq!(names, vec!["arrow", "expr"]);
+
+        let tsx = b"const arrow = (x: number) => <b>{x}</b>;\n";
+        let tsx_names = native::analyze(Language::Tsx, tsx).expect("TSX is native").function_entities();
+        assert_eq!(tsx_names, vec!["arrow"]);
+    }
+
+    /// Golden: an `else if` costs a flat `+1` in TSX, as it does in TS and JS.
+    /// rca charges it a full nesting increment there (cognitive 4 rather than 2)
+    /// because its TSX else-if test looks for the wrong parent kind.
+    #[test]
+    fn test_tsx_scores_else_if_flat_like_the_rest_of_the_family() {
+        let src =
+            b"function badge(n: number): string {\n  if (n < 0) {\n    return \"a\";\n  } else if (n === 0) {\n    return \"b\";\n  }\n  return \"c\";\n}\n";
+        let cognitive = |lang| native::analyze(lang, src).expect("native").function_cognitive();
+        assert_eq!(cognitive(Language::Tsx), vec![("badge".to_string(), 2)]);
+        // …and identical to TypeScript and JavaScript for the same source.
+        assert_eq!(cognitive(Language::TypeScript), vec![("badge".to_string(), 2)]);
     }
 
     #[test]

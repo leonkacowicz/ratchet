@@ -159,31 +159,22 @@ const JS_BASE: Rules = Rules {
     name_of: js_family_function_name,
 };
 
-/// JavaScript / JSX (mozjs grammar) — the JS family with its naming fallback.
+/// JavaScript/JSX, TypeScript and TSX all share this one rule set.
+///
+/// rca actually treats them slightly differently, but only through two bugs, which
+/// ratchet deliberately does **not** reproduce (parity against them was proved
+/// first, then dropped — see the migration epic):
+///
+/// * rca's TS/TSX naming fallback compares the parent's kind id against the *Mozjs*
+///   enum, so it never fires and anonymous functions stay `"<anonymous>"` there
+///   while JavaScript names them from their `variable_declarator`/`pair`.
+/// * rca's `TsxCode::is_else_if` tests for an `IfStatement` parent, but an
+///   `else if`'s parent is always an `else_clause`, so rca never detects an
+///   else-if in TSX and charges each a full nesting increment.
+///
+/// Both are arbitrary inconsistencies within one language family, so ratchet
+/// applies JavaScript's (correct) behaviour uniformly.
 pub static JS_FAMILY: Rules = JS_BASE;
-
-/// TypeScript — the same rules, but rca's naming fallback never fires for it, so
-/// anonymous functions stay `"<anonymous>"`.
-///
-/// Why: rca's TypeScript/TSX `get_func_space_name` matches the parent's kind id
-/// against the **Mozjs** enum (`Mozjs::Pair` / `Mozjs::VariableDeclarator`, ids 236
-/// and 153). In the TypeScript grammar those ids are `AssignmentExpression` and
-/// `Keyof`; in TSX, `ClassHeritage` and `DASHQMARKCOLON` — none of which carry the
-/// `key`/`name` field the fallback then asks for, so it always falls through.
-/// Reproduced deliberately: parity is against rca's behaviour, quirks included.
-pub static TS_FAMILY: Rules = TS_FAMILY_BASE;
-
-/// TSX — TypeScript's rules, except rca never detects an `else if`.
-///
-/// Why: rca's `TsxCode::is_else_if` checks whether the parent is an `IfStatement`,
-/// while an `else if`'s parent is always an `else_clause` (TS and Mozjs check that
-/// correctly). The test therefore never fires, and each `else if` takes a full
-/// nesting increment instead of a flat `+1`. Encoding rca's actual comparison
-/// reproduces that: the marker below simply never matches.
-pub static TSX_FAMILY: Rules = Rules { else_if_parent: Some("if_statement"), ..TS_FAMILY_BASE };
-
-/// Shared base for the TS/TSX variants (TypeScript naming, JS-family everything else).
-const TS_FAMILY_BASE: Rules = Rules { name_of: default_function_name, ..JS_BASE };
 
 /// rca's JS-family naming: an anonymous function takes its name from an enclosing
 /// `pair` (`foo: function () {}`) or `variable_declarator` (`var f = () => {}`).

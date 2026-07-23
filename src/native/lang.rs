@@ -13,7 +13,7 @@ use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
 use super::rules::Rules;
-use super::rules::{JS_FAMILY, RUST, TSX_FAMILY, TS_FAMILY};
+use super::rules::{JS_FAMILY, RUST};
 use super::{analysis, complexity};
 use crate::language::Language;
 
@@ -105,7 +105,7 @@ impl NativeLanguage for TypeScript {
     }
 
     fn rules(&self) -> &'static Rules {
-        &TS_FAMILY
+        &JS_FAMILY
     }
 }
 
@@ -120,7 +120,7 @@ impl NativeLanguage for Tsx {
     }
 
     fn rules(&self) -> &'static Rules {
-        &TSX_FAMILY
+        &JS_FAMILY
     }
 }
 
