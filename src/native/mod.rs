@@ -94,6 +94,8 @@ impl Analysis<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use super::*;
 
     #[test]
@@ -108,6 +110,23 @@ mod tests {
         assert_eq!(a.tree().root_node().kind(), "source_file");
         assert_eq!(a.file_functions(), 1);
         assert_eq!(a.function_nargs(), vec![("add".to_string(), 2)]);
+    }
+
+    /// Guard against the failure that motivated this whole migration: two
+    /// semver-incompatible tree-sitter runtimes in one graph give two distinct
+    /// `Language` types and a compile error (rca 0.0.25's `E0308`).
+    ///
+    /// Grammar crates depend only on `tree-sitter-language`, never the runtime, so
+    /// this should hold — but a future grammar bump could split either crate, and
+    /// the failure is confusing enough to be worth catching in CI.
+    #[test]
+    fn test_exactly_one_tree_sitter_runtime_in_the_lockfile() {
+        let lock = std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.lock")).expect("Cargo.lock");
+        for crate_name in ["tree-sitter", "tree-sitter-language"] {
+            let needle = format!("name = \"{crate_name}\"\n");
+            let count = lock.matches(&needle).count();
+            assert_eq!(count, 1, "expected exactly one `{crate_name}` in Cargo.lock, found {count}");
+        }
     }
 
     #[test]

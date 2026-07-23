@@ -13,14 +13,13 @@ use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
 use super::rules::Rules;
-use super::rules::{JAVASCRIPT, RUST};
+use super::rules::{JS_FAMILY, RUST, TSX_FAMILY, TS_FAMILY};
 use super::{analysis, complexity};
 use crate::language::Language;
 
 extern "C" {
-    /// Entry point of the vendored, statically-linked Rust grammar (see `build.rs`).
-    fn tree_sitter_rust() -> *const ();
-    /// Entry point of the vendored mozjs grammar — rca's JavaScript parser.
+    /// Entry point of the vendored mozjs grammar (see `build.rs`). Mozilla's JS
+    /// fork is not published, so it is the one grammar ratchet vendors.
     fn tree_sitter_mozjs() -> *const ();
 }
 
@@ -71,7 +70,7 @@ struct Rust;
 
 impl NativeLanguage for Rust {
     fn grammar(&self) -> LanguageFn {
-        unsafe { LanguageFn::from_raw(tree_sitter_rust) }
+        tree_sitter_rust::LANGUAGE
     }
 
     fn rules(&self) -> &'static Rules {
@@ -81,8 +80,8 @@ impl NativeLanguage for Rust {
 
 static RUST_LANG: Rust = Rust;
 
-/// JavaScript (including JSX), parsed with the vendored mozjs grammar. Uses the
-/// default glue — the JS family's differences are all expressed in its `Rules`.
+/// JavaScript (including JSX), parsed with the vendored mozjs grammar — the fork
+/// rca routes `.js`/`.mjs`/`.cjs`/`.jsx` to, and the one grammar with no crate.
 struct JavaScript;
 
 impl NativeLanguage for JavaScript {
@@ -91,11 +90,41 @@ impl NativeLanguage for JavaScript {
     }
 
     fn rules(&self) -> &'static Rules {
-        &JAVASCRIPT
+        &JS_FAMILY
     }
 }
 
 static JAVASCRIPT_LANG: JavaScript = JavaScript;
+
+/// TypeScript — the JS-family rules with the TypeScript grammar.
+struct TypeScript;
+
+impl NativeLanguage for TypeScript {
+    fn grammar(&self) -> LanguageFn {
+        tree_sitter_typescript::LANGUAGE_TYPESCRIPT
+    }
+
+    fn rules(&self) -> &'static Rules {
+        &TS_FAMILY
+    }
+}
+
+static TYPESCRIPT_LANG: TypeScript = TypeScript;
+
+/// TSX — the JS-family rules with the TSX grammar (TypeScript plus JSX).
+struct Tsx;
+
+impl NativeLanguage for Tsx {
+    fn grammar(&self) -> LanguageFn {
+        tree_sitter_typescript::LANGUAGE_TSX
+    }
+
+    fn rules(&self) -> &'static Rules {
+        &TSX_FAMILY
+    }
+}
+
+static TSX_LANG: Tsx = Tsx;
 
 /// Resolve a detected [`Language`] to its native implementation, or `None` when it
 /// has none yet (those languages still route through rca).
@@ -105,6 +134,8 @@ pub fn for_language(lang: Language) -> Option<&'static dyn NativeLanguage> {
     match lang {
         Language::Rust => Some(&RUST_LANG),
         Language::JavaScript => Some(&JAVASCRIPT_LANG),
+        Language::TypeScript => Some(&TYPESCRIPT_LANG),
+        Language::Tsx => Some(&TSX_LANG),
         _ => None,
     }
 }

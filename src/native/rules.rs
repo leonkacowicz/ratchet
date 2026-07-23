@@ -33,6 +33,7 @@ use tree_sitter::Node;
 use super::analysis::{default_function_name, field_text, ANONYMOUS};
 
 /// The node kinds that drive each metric for one language.
+#[derive(Clone, Copy)]
 pub struct Rules {
     /// Kinds that form a function space (functions, methods, closures/lambdas).
     /// Drives the walk, the function count, and cyclomatic's per-space base.
@@ -108,15 +109,18 @@ pub static RUST: Rules = Rules {
     name_of: default_function_name,
 };
 
-/// JavaScript (including JSX) via the vendored mozjs grammar — the same grammar
-/// and rules rca applies to `.js`/`.mjs`/`.cjs`/`.jsx`.
+/// The JS family — JavaScript/JSX, TypeScript and TSX.
 ///
-/// Note the JS family differs from Rust in three ways beyond node names: a
-/// function declaration resets the lambda weight as well as nesting; every
-/// statement resets the boolean sequence; and `function_expression`/
-/// `method_definition`/generators are function *spaces* that are neither `fn` nor
-/// lambda for cognitive purposes (they inherit their context unchanged).
-pub static JAVASCRIPT: Rules = Rules {
+/// rca applies the same rules to all three (one `js_cognitive!` macro, identical
+/// space kinds, cyclomatic set, naming fallback and non-arg kinds), so they share
+/// one rule set here and differ only in which grammar parses them.
+///
+/// The family differs from Rust in three ways beyond node names: a function
+/// declaration resets the lambda weight as well as nesting; every statement
+/// resets the boolean sequence; and `function_expression`/`method_definition`/
+/// generators are function *spaces* that are neither `fn` nor lambda for
+/// cognitive purposes (they inherit their context unchanged).
+const JS_BASE: Rules = Rules {
     function_kinds: &[
         "function_declaration",
         "generator_function_declaration",
@@ -152,12 +156,38 @@ pub static JAVASCRIPT: Rules = Rules {
     label_kinds: &["statement_identifier"],
     else_if_parent: Some("else_clause"),
     fn_resets_lambda: true,
-    name_of: javascript_function_name,
+    name_of: js_family_function_name,
 };
 
-/// rca's JS naming: an anonymous function takes its name from an enclosing
+/// JavaScript / JSX (mozjs grammar) — the JS family with its naming fallback.
+pub static JS_FAMILY: Rules = JS_BASE;
+
+/// TypeScript — the same rules, but rca's naming fallback never fires for it, so
+/// anonymous functions stay `"<anonymous>"`.
+///
+/// Why: rca's TypeScript/TSX `get_func_space_name` matches the parent's kind id
+/// against the **Mozjs** enum (`Mozjs::Pair` / `Mozjs::VariableDeclarator`, ids 236
+/// and 153). In the TypeScript grammar those ids are `AssignmentExpression` and
+/// `Keyof`; in TSX, `ClassHeritage` and `DASHQMARKCOLON` — none of which carry the
+/// `key`/`name` field the fallback then asks for, so it always falls through.
+/// Reproduced deliberately: parity is against rca's behaviour, quirks included.
+pub static TS_FAMILY: Rules = TS_FAMILY_BASE;
+
+/// TSX — TypeScript's rules, except rca never detects an `else if`.
+///
+/// Why: rca's `TsxCode::is_else_if` checks whether the parent is an `IfStatement`,
+/// while an `else if`'s parent is always an `else_clause` (TS and Mozjs check that
+/// correctly). The test therefore never fires, and each `else if` takes a full
+/// nesting increment instead of a flat `+1`. Encoding rca's actual comparison
+/// reproduces that: the marker below simply never matches.
+pub static TSX_FAMILY: Rules = Rules { else_if_parent: Some("if_statement"), ..TS_FAMILY_BASE };
+
+/// Shared base for the TS/TSX variants (TypeScript naming, JS-family everything else).
+const TS_FAMILY_BASE: Rules = Rules { name_of: default_function_name, ..JS_BASE };
+
+/// rca's JS-family naming: an anonymous function takes its name from an enclosing
 /// `pair` (`foo: function () {}`) or `variable_declarator` (`var f = () => {}`).
-fn javascript_function_name(node: &Node, source: &[u8]) -> String {
+fn js_family_function_name(node: &Node, source: &[u8]) -> String {
     if let Some(name) = field_text(node, "name", source) {
         return name;
     }

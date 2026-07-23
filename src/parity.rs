@@ -203,14 +203,8 @@ mod tests {
     }
 
     /// Every metric the native path implements.
-    const ALL_METRICS: [Metric; 6] = [
-        Metric::FileLines,
-        Metric::FileFunctions,
-        Metric::FunctionLines,
-        Metric::FunctionArgs,
-        Metric::FunctionCyclomatic,
-        Metric::FunctionCognitive,
-    ];
+    const ALL_METRICS: [Metric; 6] =
+        [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionCognitive];
 
     /// Every file in the repo corpus with extension `ext`: ratchet's own `src/`
     /// plus `tests/fixtures/`.
@@ -366,6 +360,22 @@ mod tests {
             [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionCognitive]
         {
             assert_metric_parity_over_corpus(metric, Language::JavaScript, "js", 2);
+        }
+    }
+
+    /// TypeScript and TSX reuse the JS-family rules with their own grammars, so
+    /// both must agree with rca on the walk and on every metric.
+    #[test]
+    fn test_typescript_and_tsx_parity_over_corpus() {
+        for (lang, ext) in [(Language::TypeScript, "ts"), (Language::Tsx, "tsx")] {
+            let files = corpus(ext);
+            assert!(files.len() >= 2, "expected .{ext} fixtures, found {}", files.len());
+            for (path, source) in &files {
+                assert_function_walk_parity(lang, source, path);
+            }
+            for metric in ALL_METRICS {
+                assert_metric_parity_over_corpus(metric, lang, ext, 2);
+            }
         }
     }
 

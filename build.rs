@@ -5,7 +5,8 @@
 use std::path::Path;
 
 fn main() {
-    compile_grammar("tree-sitter-rust", &["parser.c", "scanner.c"]);
+    // Only grammars with no published crate are vendored; everything else is an
+    // ordinary registry dependency (see Cargo.toml).
     compile_grammar("tree-sitter-mozjs", &["parser.c", "scanner.c"]);
 }
 

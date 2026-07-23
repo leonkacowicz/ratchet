@@ -499,6 +499,8 @@ dependencies = [
  "tempfile",
  "tree-sitter",
  "tree-sitter-language",
+ "tree-sitter-rust",
+ "tree-sitter-typescript",
  "walkdir",
 ]
 
