@@ -188,7 +188,7 @@ fn strip_test_modules(source: &str) -> String {
 
 /// Visit every `Function`-kind space in the tree, including nested ones
 /// (closures and methods).
-fn visit_function_spaces(top: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
+pub(crate) fn visit_function_spaces(top: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
     fn recurse(space: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
         for child in &space.spaces {
             if child.kind == SpaceKind::Function {
@@ -205,7 +205,7 @@ fn visit_function_spaces(top: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
 /// Named functions and methods reuse the name produced by
 /// `rust-code-analysis` (e.g. `Foo::bar`). Anonymous closures get a
 /// sequential `{closure_NN}` synthesized in source order.
-fn function_entity_name(space: &FuncSpace, closure_counter: &mut u32) -> String {
+pub(crate) fn function_entity_name(space: &FuncSpace, closure_counter: &mut u32) -> String {
     match &space.name {
         Some(name) if !name.is_empty() => name.clone(),
         _ => {

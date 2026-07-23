@@ -11,6 +11,9 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use rust_code_analysis::FuncSpace;
+
+use crate::collectors::structural::{function_entity_name, visit_function_spaces};
 use crate::language::Language;
 use crate::native;
 
@@ -87,6 +90,29 @@ fn diff(metric: Metric, rca: &EntityValues, native: &EntityValues) -> Option<Str
     Some(format!("{metric:?} parity divergence:\n{}", lines.join("\n")))
 }
 
+/// Compare the native tree-sitter function walk against rca's for one Rust
+/// file: same functions, same names, same order. `Ok(())` when identical,
+/// otherwise `Err` with both ordered lists for debugging.
+pub fn check_function_walk_parity(source: &[u8], path: &Path) -> Result<(), String> {
+    let rca = Language::Rust.parse_metrics(source.to_vec(), path).map(|top| rca_function_entities(&top)).unwrap_or_default();
+    let native = native::rust_function_entities(source);
+    if rca == native {
+        Ok(())
+    } else {
+        Err(format!("function-walk divergence in {}:\n  rca   ={rca:?}\n  native={native:?}", path.display()))
+    }
+}
+
+/// rca's ordered function entity names for a parsed file — the oracle the native
+/// walk is checked against. Reuses rca's production naming (`visit_function_spaces`
+/// + `function_entity_name`) so the two implementations cannot drift.
+fn rca_function_entities(top: &FuncSpace) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut closure_counter: u32 = 0;
+    visit_function_spaces(top, &mut |space| out.push(function_entity_name(space, &mut closure_counter)));
+    out
+}
+
 fn rca_file_lines(source: &[u8], path: &Path) -> EntityValues {
     let mut out = EntityValues::new();
     if let Some(top) = Language::Rust.parse_metrics(source.to_vec(), path) {
@@ -160,6 +186,37 @@ mod tests {
             }
             let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
             if let Err(report) = check_parity(Metric::FileLines, &source, path) {
+                panic!("{report}");
+            }
+            checked += 1;
+        }
+        assert!(checked > 5, "expected to check several Rust files, checked {checked}");
+    }
+
+    /// Parity on constructs the repo corpus may not exercise: a trait with a
+    /// body-less signature (excluded) plus a defaulted method (included), a
+    /// module, an async fn, and a generic fn. Checked against the rca oracle.
+    #[test]
+    fn test_function_walk_parity_on_tricky_constructs() {
+        let src = b"trait T {\n    fn required(&self);\n    fn defaulted(&self) { let c = || 0; }\n}\nmod inner { pub fn nested() {} }\nasync fn a() {}\nfn generic<X>(x: X) -> X { x }\n";
+        if let Err(report) = check_function_walk_parity(src, Path::new("tricky.rs")) {
+            panic!("{report}");
+        }
+    }
+
+    /// The native function-space walk must enumerate and name the same functions
+    /// rca does, in the same order, on every real Rust file in the repo.
+    #[test]
+    fn test_function_walk_parity_over_repo_corpus() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut checked = 0;
+        for entry in walkdir::WalkDir::new(root.join("src")).into_iter().chain(walkdir::WalkDir::new(root.join("tests/fixtures"))).filter_map(Result::ok) {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("rs") {
+                continue;
+            }
+            let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
+            if let Err(report) = check_function_walk_parity(&source, path) {
                 panic!("{report}");
             }
             checked += 1;

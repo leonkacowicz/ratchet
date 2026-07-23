@@ -10,7 +10,7 @@
 //! only exercised by tests, so dead-code is allowed at the module level.
 #![allow(dead_code)]
 
-use tree_sitter::{Parser, Tree};
+use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_language::LanguageFn;
 
 extern "C" {
@@ -29,9 +29,64 @@ pub fn parse_rust(source: &[u8]) -> Option<Tree> {
     parser.parse(source, None)
 }
 
+/// Tree-sitter node kinds ratchet treats as Rust function spaces — the same set
+/// `rust-code-analysis` maps to `SpaceKind::Function` (its getter routes
+/// `function_item` and `closure_expression` there).
+fn is_rust_function(node: &Node) -> bool {
+    matches!(node.kind(), "function_item" | "closure_expression")
+}
+
+/// The entity name for a Rust function node, matching rca's default
+/// `get_func_space_name`: the node's `name` field text, or `"<anonymous>"` when
+/// it has none (closures). Note rca does **not** qualify methods by their type.
+fn rust_function_name(node: &Node, source: &[u8]) -> String {
+    match node.child_by_field_name("name") {
+        Some(name) => std::str::from_utf8(&source[name.byte_range()]).unwrap_or("<anonymous>").to_string(),
+        None => "<anonymous>".to_string(),
+    }
+}
+
+/// Visit every Rust function space (`function_item` + `closure_expression`) in
+/// the tree in pre-order, invoking `f(name, node)`. Order and naming mirror
+/// rca's `visit_function_spaces` + `function_entity_name`, so entities line up
+/// one-to-one with the rca path. The node handle lets metric collectors compute
+/// per-function values as they migrate.
+pub fn visit_rust_functions(tree: &Tree, source: &[u8], f: &mut impl FnMut(&str, Node)) {
+    fn recurse(node: Node, source: &[u8], f: &mut impl FnMut(&str, Node)) {
+        let mut i = 0;
+        while i < node.named_child_count() {
+            let child = node.named_child(i).expect("named_child within count");
+            if is_rust_function(&child) {
+                let name = rust_function_name(&child, source);
+                f(&name, child);
+            }
+            recurse(child, source, f);
+            i += 1;
+        }
+    }
+    recurse(tree.root_node(), source, f);
+}
+
+/// Ordered function entity names for a Rust `source` file, matching the rca
+/// path's function list. Empty when the source fails to parse.
+pub fn rust_function_entities(source: &[u8]) -> Vec<String> {
+    let Some(tree) = parse_rust(source) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    visit_rust_functions(&tree, source, &mut |name, _node| out.push(name.to_string()));
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_rust_function_entities_names_functions_and_closures() {
+        let src = b"struct S;\nimpl S {\n    fn new() -> S { let f = || 1; S }\n}\nfn top() {}\n";
+        assert_eq!(rust_function_entities(src), vec!["new", "<anonymous>", "top"]);
+    }
 
     #[test]
     fn test_parse_rust_finds_a_function_item() {
