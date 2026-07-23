@@ -5,10 +5,10 @@
 
 | State | Count |
 |---|---:|
-| backlog | 29 |
-| ongoing | 4 |
+| backlog | 28 |
+| ongoing | 6 |
 | done | 17 |
-| **total** | **50** |
+| **total** | **51** |
 
 ## Hierarchies
 
@@ -46,12 +46,13 @@
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](backlog/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 0% (0/26 pts · 0/7 done) · _low_ · backlog
+### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 0% (0/31 pts · 0/8 done) · _low_ · ongoing
 
 - [ ] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](backlog/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md) _(backlog)_
 - [ ] [#9gkaehf Drop the rust-code-analysis dependency](backlog/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(backlog)_
 - [ ] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](backlog/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md) _(backlog)_
 - [ ] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](backlog/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md) _(backlog)_
+- [ ] [#knau82g Generalize the native layer to be language-parameterized](ongoing/knau82g-generalize-the-native-layer-to-be-language-parameterized.md) _(ongoing)_
 - [ ] [#q6dbjtq Native metrics for Python (vendor tree-sitter-python)](backlog/q6dbjtq-native-metrics-for-python-vendor-tree-sitter-python.md) _(backlog)_
 - [ ] [#skcztyt Native metrics for Java (vendor tree-sitter-java)](backlog/skcztyt-native-metrics-for-java-vendor-tree-sitter-java.md) _(backlog)_
 - [ ] [#xemvnh6 Native metrics for C/C++ (vendor tree-sitter-cpp)](backlog/xemvnh6-native-metrics-for-c-c-vendor-tree-sitter-cpp.md) _(backlog)_
@@ -63,13 +64,13 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 49% (25/51 pts · 9/16 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 45% (25/56 pts · 9/17 done) · _medium_ · ongoing
 
 - [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
 - [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](done/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](done/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
-- [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](backlog/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(backlog)_
+- [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(ongoing)_
 - [x] [#mz997tp Native function-space walk: identify + name functions to match rca](done/mz997tp-native-function-space-walk-identify-name-functions-to-match-rca.md)
 - [x] [#ne4vt2h Dual-path metric collector + rca parity harness](done/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md)
 - [x] [#pybgwkw Migrate SLOC to raw tree-sitter (Rust)](done/pybgwkw-migrate-sloc-to-raw-tree-sitter-rust.md)
