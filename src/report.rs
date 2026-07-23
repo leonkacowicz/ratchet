@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::collectors::Collector;
+use crate::sources::Sources;
 
 pub const SCHEMA_VERSION: u32 = 1;
 
@@ -58,15 +59,15 @@ pub fn default_thresholds() -> BTreeMap<String, u64> {
     t
 }
 
-/// Run all collectors and produce a report.
-pub fn generate(workspace_root: &Path) -> Result<Report> {
+/// Run all collectors over the selected sources and produce a report.
+pub fn generate(root: &Path, sources: &Sources) -> Result<Report> {
     let thresholds = default_thresholds();
     let collectors: Vec<Box<dyn Collector>> = vec![Box::new(crate::collectors::structural::Structural::new(thresholds.clone()))];
 
     let mut violations: CategoryMap = thresholds.keys().map(|k| (k.clone(), BTreeMap::new())).collect();
 
     for collector in &collectors {
-        for (category, entries) in collector.collect(workspace_root)? {
+        for (category, entries) in collector.collect(root, sources)? {
             violations.entry(category).or_default().extend(entries);
         }
     }

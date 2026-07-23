@@ -69,6 +69,40 @@ and skips (bootstrap mode) if the baseline has no report yet.
 Thresholds may not change in the same commit that adds a violation — a threshold edit
 between baseline and HEAD is rejected, forcing it into its own reviewable PR.
 
+## Languages
+
+Files are dispatched to a parser by extension. Supported today:
+
+| Language | Extensions |
+|---|---|
+| Rust | `.rs` |
+| TypeScript | `.ts` |
+| TSX | `.tsx` |
+
+Only files with a supported extension are analyzed; anything else under the source roots
+is ignored. `#[cfg(test)]` module stripping applies to Rust files only.
+
+## Configuration
+
+Configuration is optional. If a `ratchet.json` exists at the project root (or is passed
+with `--config PATH`), it is loaded; otherwise defaults apply. All fields are optional:
+
+```json
+{
+  "sources": ["src"],
+  "include": [],
+  "exclude": ["**/*.d.ts", "**/*.test.ts"]
+}
+```
+
+- **`sources`** — directories to scan, relative to the project root. Default: `["src"]`.
+- **`include`** — glob patterns (matched against root-relative paths). When non-empty, a
+  file must match at least one. Empty means include every supported file.
+- **`exclude`** — glob patterns; a matching file is skipped. Empty means exclude nothing.
+
+Defaults reproduce the original behaviour: scan `src` for every supported language with no
+glob filtering.
+
 ## Continuous integration
 
 The [`CI` workflow](.github/workflows/ci.yml) builds, lints and tests the code, then runs
@@ -88,6 +122,6 @@ building the binary (or `cargo install --git https://github.com/leonkacowicz/rat
 
 ## Status
 
-Early standalone extraction. Currently analyzes **Rust** source under `<root>/src/`
-(test modules stripped). Multi-language support, a config file, and organizational
-metrics are tracked in the issue tracker (`trck`).
+Early standalone extraction. Analyzes **Rust**, **TypeScript**, and **TSX** across
+configurable source roots with include/exclude globs. Further languages, thresholds in
+config, and organizational metrics are tracked in the issue tracker (`trck`).

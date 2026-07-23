@@ -1,23 +1,32 @@
 mod collectors;
+mod config;
+mod language;
 mod ratchet;
 mod report;
+mod sources;
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::config::Config;
 use crate::report::Report;
+use crate::sources::Sources;
 
 const REPORT_FILE: &str = "quality-report.json";
 
 #[derive(Parser)]
 #[command(name = "ratchet", about = "Snapshot structural code metrics and block quality regressions in CI.")]
 struct Cli {
-    /// Project root to analyze: the directory containing the `src/` tree and
+    /// Project root to analyze: the directory containing the source tree and
     /// (for `check`/`compare`) the committed `quality-report.json`.
     #[arg(long, default_value = ".", global = true)]
     root: PathBuf,
+
+    /// Path to a config file. Defaults to `<root>/ratchet.json` if present.
+    #[arg(long, global = true)]
+    config: Option<PathBuf>,
 
     #[command(subcommand)]
     command: Cmd,
@@ -42,7 +51,12 @@ enum Cmd {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let root = resolve_root(&cli.root)?;
-    run(cli.command, &root)
+    run(cli.command, &root, cli.config.as_deref())
+}
+
+/// Load the config for `root` and compile it into a source selector.
+fn load_sources(root: &Path, config: Option<&Path>) -> Result<Sources> {
+    Sources::from_config(&Config::load(root, config)?)
 }
 
 /// Resolve the `--root` argument to an absolute path, failing early if it does
@@ -51,54 +65,64 @@ fn resolve_root(root: &Path) -> Result<PathBuf> {
     std::fs::canonicalize(root).with_context(|| format!("resolving project root {}", root.display()))
 }
 
-fn run(cmd: Cmd, root: &Path) -> Result<()> {
-    let report_path = root.join(REPORT_FILE);
-
+fn run(cmd: Cmd, root: &Path, config: Option<&Path>) -> Result<()> {
     match cmd {
-        Cmd::Generate => {
-            let report = report::generate(root)?;
-            report.write_to(&report_path)?;
-            println!("wrote {}", report_path.display());
-        },
-        Cmd::Check => {
-            let actual = report::generate(root)?;
-            let committed = Report::read_from(&report_path).with_context(|| format!("reading {}", report_path.display()))?;
-            if actual != committed {
-                bail!(
-                    "{} is out of date. Run `ratchet generate` and commit the result.\n\n\
-                     diff (committed → regenerated):\n{}",
-                    REPORT_FILE,
-                    pretty_diff(&committed.to_pretty_string(), &actual.to_pretty_string()),
-                );
-            }
-            println!("ok: {} matches the codebase", REPORT_FILE);
-        },
-        Cmd::Compare { base } => {
-            let current = Report::read_from(&report_path).with_context(|| format!("reading {}", report_path.display()))?;
-            match read_report_at_ref(root, &base)? {
-                None => {
-                    eprintln!("warning: no {REPORT_FILE} at {base} — bootstrap mode, ratchet skipped");
-                },
-                Some(baseline) => {
-                    if baseline.thresholds != current.thresholds {
-                        bail!(
-                            "thresholds differ between {base} and HEAD; threshold edits must \
-                             land in their own PR. Revert the threshold change or split the PR."
-                        );
-                    }
-                    let errors = ratchet::check(&baseline, &current);
-                    if !errors.is_empty() {
-                        bail!("ratchet violations:\n{}", ratchet::format_errors(&errors));
-                    }
-                },
-            }
-            println!("ok: ratchet check passed");
-        },
-        Cmd::Dump { path } => {
-            collectors::structural::dump_tree(&path)?;
-        },
+        Cmd::Generate => cmd_generate(root, config),
+        Cmd::Check => cmd_check(root, config),
+        Cmd::Compare { base } => cmd_compare(root, &base),
+        Cmd::Dump { path } => collectors::structural::dump_tree(&path),
     }
+}
+
+/// Generate the report and write it to `<root>/quality-report.json`.
+fn cmd_generate(root: &Path, config: Option<&Path>) -> Result<()> {
+    let report = report::generate(root, &load_sources(root, config)?)?;
+    report.write_to(&root.join(REPORT_FILE))?;
+    println!("wrote {}", root.join(REPORT_FILE).display());
     Ok(())
+}
+
+/// Fail if the committed report no longer matches the current codebase.
+fn cmd_check(root: &Path, config: Option<&Path>) -> Result<()> {
+    let actual = report::generate(root, &load_sources(root, config)?)?;
+    let committed = read_committed(root)?;
+    if actual != committed {
+        bail!(
+            "{} is out of date. Run `ratchet generate` and commit the result.\n\n\
+             diff (committed → regenerated):\n{}",
+            REPORT_FILE,
+            pretty_diff(&committed.to_pretty_string(), &actual.to_pretty_string()),
+        );
+    }
+    println!("ok: {} matches the codebase", REPORT_FILE);
+    Ok(())
+}
+
+/// Fail if the committed report regresses against the baseline git ref.
+fn cmd_compare(root: &Path, base: &str) -> Result<()> {
+    let current = read_committed(root)?;
+    let Some(baseline) = read_report_at_ref(root, base)? else {
+        eprintln!("warning: no {REPORT_FILE} at {base} — bootstrap mode, ratchet skipped");
+        return Ok(());
+    };
+    if baseline.thresholds != current.thresholds {
+        bail!(
+            "thresholds differ between {base} and HEAD; threshold edits must \
+             land in their own PR. Revert the threshold change or split the PR."
+        );
+    }
+    let errors = ratchet::check(&baseline, &current);
+    if !errors.is_empty() {
+        bail!("ratchet violations:\n{}", ratchet::format_errors(&errors));
+    }
+    println!("ok: ratchet check passed");
+    Ok(())
+}
+
+/// Read the committed `quality-report.json` at the project root.
+fn read_committed(root: &Path) -> Result<Report> {
+    let path = root.join(REPORT_FILE);
+    Report::read_from(&path).with_context(|| format!("reading {}", path.display()))
 }
 
 fn read_report_at_ref(root: &Path, base: &str) -> Result<Option<Report>> {

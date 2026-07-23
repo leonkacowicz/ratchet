@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow             = "1"
 clap               = { version = "4", features = ["derive"] }
+globset            = "0.4"
 # crates.io rust-code-analysis 0.0.25 is broken: tree-sitter-rust=0.20.3 pulls a
 # newer tree-sitter (0.26) than rust-code-analysis itself can compile against.
 # master has the version pins fixed; pinned to a known-good commit for build

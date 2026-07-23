@@ -1,13 +1,12 @@
 use anyhow::{Context, Result};
-use rust_code_analysis::{metrics, FuncSpace, ParserTrait, RustParser, SpaceKind};
+use rust_code_analysis::{FuncSpace, SpaceKind};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
 
 use crate::collectors::Collector;
+use crate::language::Language;
 use crate::report::CategoryMap;
-
-const SOURCE_DIR: &str = "src";
+use crate::sources::Sources;
 
 const CATEGORY_FUNCTION_LINES: &str = "function_lines";
 const CATEGORY_FUNCTION_COGNITIVE: &str = "function_cognitive";
@@ -19,9 +18,9 @@ const CATEGORY_MODULE_FILES: &str = "module_files";
 
 /// Structural metrics collector backed by `rust-code-analysis`.
 ///
-/// Walks every `*.rs` file under `<workspace_root>/src/`, parses each with
-/// the Rust grammar via tree-sitter, and emits per-function and per-file
-/// excess values. `module_files` is computed locally by walking directories.
+/// Parses every source file the [`Sources`] selector discovers, dispatching to
+/// the right grammar per file, and emits per-function and per-file excess
+/// values. `module_files` is computed locally by walking directories.
 pub struct Structural {
     thresholds: BTreeMap<String, u64>,
 }
@@ -48,31 +47,39 @@ impl Collector for Structural {
         "structural"
     }
 
-    fn collect(&self, workspace_root: &Path) -> Result<CategoryMap> {
+    fn collect(&self, root: &Path, sources: &Sources) -> Result<CategoryMap> {
         let mut violations: CategoryMap = BTreeMap::new();
-        let src_root = workspace_root.join(SOURCE_DIR);
-        let files = collect_rust_files(&src_root);
+        let files = sources.collect(root);
 
-        for file in &files {
-            let rel = relative_path(file, workspace_root);
-            self.collect_for_file(file, &rel, &mut violations)?;
+        for (file, lang) in &files {
+            let unit = SourceFile { path: file, lang: *lang, rel: relative_path(file, root) };
+            self.collect_for_file(&unit, &mut violations)?;
         }
 
-        self.collect_module_files(&files, workspace_root, &mut violations);
+        let paths: Vec<PathBuf> = files.into_iter().map(|(path, _)| path).collect();
+        self.collect_module_files(&paths, root, &mut violations);
 
         Ok(violations)
     }
 }
 
+/// One discovered source file: its path, resolved language, and root-relative
+/// display path used as the metric entity prefix.
+struct SourceFile<'a> {
+    path: &'a Path,
+    lang: Language,
+    rel: String,
+}
+
 impl Structural {
-    fn collect_for_file(&self, file: &Path, rel: &str, violations: &mut CategoryMap) -> Result<()> {
-        let raw = std::fs::read_to_string(file).with_context(|| format!("reading {}", file.display()))?;
-        let stripped = strip_test_modules(&raw);
-        let parser = RustParser::new(stripped.into_bytes(), file, None);
-        let Some(top) = metrics(&parser, file) else {
+    fn collect_for_file(&self, unit: &SourceFile, violations: &mut CategoryMap) -> Result<()> {
+        let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
+        let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
+        let Some(top) = unit.lang.parse_metrics(source.into_bytes(), unit.path) else {
             return Ok(());
         };
 
+        let rel = &unit.rel;
         let file_lines = sloc_for(&top);
         let file_functions = function_count_for(&top);
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
@@ -91,7 +98,7 @@ impl Structural {
         Ok(())
     }
 
-    fn collect_module_files(&self, files: &[PathBuf], workspace_root: &Path, violations: &mut CategoryMap) {
+    fn collect_module_files(&self, files: &[PathBuf], root: &Path, violations: &mut CategoryMap) {
         let mut counts: BTreeMap<PathBuf, u64> = BTreeMap::new();
         for file in files {
             if let Some(parent) = file.parent() {
@@ -99,25 +106,10 @@ impl Structural {
             }
         }
         for (dir, count) in counts {
-            let rel = relative_path(&dir, workspace_root);
+            let rel = relative_path(&dir, root);
             self.record(violations, CATEGORY_MODULE_FILES, rel, count);
         }
     }
-}
-
-fn collect_rust_files(src_root: &Path) -> Vec<PathBuf> {
-    if !src_root.exists() {
-        return Vec::new();
-    }
-    let mut files: Vec<PathBuf> = WalkDir::new(src_root)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|e| e.file_type().is_file())
-        .map(|e| e.into_path())
-        .filter(|p| p.extension().is_some_and(|ext| ext == "rs"))
-        .collect();
-    files.sort();
-    files
 }
 
 fn relative_path(path: &Path, root: &Path) -> String {
@@ -146,12 +138,16 @@ fn function_count_for(space: &FuncSpace) -> u64 {
     space.metrics.nom.total().round() as u64
 }
 
-/// Print the FuncSpace tree for a single file. Used by the `xtask quality
-/// dump` debug command to inspect what rust-code-analysis emits.
-pub fn dump_tree(path: &Path) -> anyhow::Result<()> {
-    let bytes = std::fs::read(path)?;
-    let parser = RustParser::new(bytes, path, None);
-    let Some(top) = metrics(&parser, path) else {
+/// Print the FuncSpace tree for a single file, dispatching on its extension.
+/// Used by the `ratchet dump` debug command to inspect what
+/// rust-code-analysis emits.
+pub fn dump_tree(path: &Path) -> Result<()> {
+    let Some(lang) = path.extension().and_then(|e| e.to_str()).and_then(Language::from_extension) else {
+        println!("(unsupported extension)");
+        return Ok(());
+    };
+    let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+    let Some(top) = lang.parse_metrics(bytes, path) else {
         println!("(no metrics)");
         return Ok(());
     };
@@ -168,11 +164,10 @@ pub fn dump_tree(path: &Path) -> anyhow::Result<()> {
 /// Truncate a Rust source file at the first trailing `#[cfg(test)] mod
 /// NAME { … }` block and return only the production-code prefix.
 ///
-/// Targets sqltgen's convention of one test module at the bottom of each
-/// `src/*.rs` file. Detects the first line that is exactly `#[cfg(test)]`
-/// followed (after possible blanks) by a `[pub ]mod` line, and drops
-/// everything from the attribute to EOF. Files without that pattern are
-/// returned unchanged.
+/// Targets the convention of one test module at the bottom of each `src/*.rs`
+/// file. Detects the first line that is exactly `#[cfg(test)]` followed (after
+/// possible blanks) by a `[pub ]mod` line, and drops everything from the
+/// attribute to EOF. Files without that pattern are returned unchanged.
 fn strip_test_modules(source: &str) -> String {
     let lines: Vec<&str> = source.lines().collect();
     let Some(cfg_idx) = lines.iter().position(|l| l.trim() == "#[cfg(test)]") else {
@@ -230,19 +225,6 @@ mod tests {
     }
 
     #[test]
-    fn test_collect_rust_files_returns_sorted_rs_files() {
-        let dir = tempdir();
-        std::fs::write(dir.path().join("a.rs"), "").unwrap();
-        std::fs::write(dir.path().join("b.txt"), "").unwrap();
-        std::fs::create_dir(dir.path().join("sub")).unwrap();
-        std::fs::write(dir.path().join("sub").join("c.rs"), "").unwrap();
-
-        let files = collect_rust_files(dir.path());
-        let names: Vec<String> = files.iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect();
-        assert_eq!(names, vec!["a.rs", "c.rs"]);
-    }
-
-    #[test]
     fn test_record_skips_values_at_or_below_threshold() {
         let s = structural();
         let mut vio = BTreeMap::new();
@@ -264,10 +246,6 @@ mod tests {
 
     fn blank_space() -> FuncSpace {
         FuncSpace { name: Some("foo".into()), start_line: 1, end_line: 1, kind: SpaceKind::Function, spaces: Vec::new(), metrics: Default::default() }
-    }
-
-    fn tempdir() -> tempfile::TempDir {
-        tempfile::tempdir().unwrap()
     }
 
     #[test]

@@ -491,6 +491,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
+ "globset",
  "rust-code-analysis",
  "serde",
  "serde_json",

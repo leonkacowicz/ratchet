@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::path::Path;
 
 use crate::report::CategoryMap;
+use crate::sources::Sources;
 
 pub mod structural;
 
@@ -12,5 +13,5 @@ pub mod structural;
 pub trait Collector {
     #[allow(dead_code)] // used once a second collector lands; keeps the trait shape stable.
     fn name(&self) -> &str;
-    fn collect(&self, workspace_root: &Path) -> Result<CategoryMap>;
+    fn collect(&self, root: &Path, sources: &Sources) -> Result<CategoryMap>;
 }
