@@ -5,7 +5,7 @@
 
 use tree_sitter::{Node, Tree};
 
-use super::analysis::{function_name, visit_functions};
+use super::analysis::visit_functions;
 use super::rules::Rules;
 
 /// Per-function cyclomatic complexity as `(entity_name, value)` in walk order —
@@ -90,7 +90,7 @@ impl Cog<'_> {
     /// walk) and return its cognitive_sum (own `structural` + nested spaces).
     fn space(&mut self, node: &Node, ctx: CogCtx) -> u64 {
         let idx = self.out.len();
-        self.out.push((function_name(node, self.source), 0));
+        self.out.push(((self.rules.name_of)(node, self.source), 0));
         let mut space = CogSpace::default();
         let mut i = 0;
         while i < node.child_count() {
@@ -111,16 +111,32 @@ impl Cog<'_> {
         while i < node.child_count() {
             let c = node.child(i).expect("child within count");
             let kind = c.kind();
-            if self.rules.fn_kinds.contains(&kind) {
-                let depth = if child.in_fn { child.depth + 1 } else { child.depth };
-                space.nested_sum += self.space(&c, CogCtx { nesting: 0, depth, lambda: child.lambda, in_fn: true });
-            } else if self.rules.lambda_kinds.contains(&kind) {
-                space.nested_sum += self.space(&c, CogCtx { lambda: child.lambda + 1, ..child });
+            if self.rules.is_function(kind) {
+                space.nested_sum += self.space(&c, space_ctx(kind, child, self.rules));
             } else {
                 self.walk(&c, child, space);
             }
             i += 1;
         }
+    }
+}
+
+/// The context a nested function space inherits. A `fn` kind restarts nesting
+/// (and, where the language demands it, the lambda weight) and deepens function
+/// depth; a lambda kind adds lambda weight; any other function space — a JS
+/// `function_expression` or `method_definition`, say — inherits unchanged.
+fn space_ctx(kind: &str, ctx: CogCtx, rules: &Rules) -> CogCtx {
+    if rules.fn_kinds.contains(&kind) {
+        CogCtx {
+            nesting: 0,
+            depth: if ctx.in_fn { ctx.depth + 1 } else { ctx.depth },
+            lambda: if rules.fn_resets_lambda { 0 } else { ctx.lambda },
+            in_fn: true,
+        }
+    } else if rules.lambda_kinds.contains(&kind) {
+        CogCtx { lambda: ctx.lambda + 1, ..ctx }
+    } else {
+        ctx
     }
 }
 

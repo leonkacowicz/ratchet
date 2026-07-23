@@ -6,6 +6,7 @@ use std::path::Path;
 
 fn main() {
     compile_grammar("tree-sitter-rust", &["parser.c", "scanner.c"]);
+    compile_grammar("tree-sitter-mozjs", &["parser.c", "scanner.c"]);
 }
 
 /// Compile one vendored grammar's C sources into a static archive linked into the

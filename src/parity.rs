@@ -124,31 +124,40 @@ mod tests {
     /// file-level metrics; `path::name` for function-level ones).
     type EntityValues = BTreeMap<String, u64>;
 
-    /// Compute `metric` for a single Rust `source` file via `backend`, as an
-    /// entity→value map. Function-level metrics key each entity as `path::name`
-    /// (colliding closures collapse, exactly as the production report's map does).
-    fn compute(metric: Metric, backend: Backend, source: &[u8], path: &Path) -> EntityValues {
-        let rca_top = || Language::Rust.parse_metrics(source.to_vec(), path);
+    /// One file under test: its language, bytes and display path.
+    #[derive(Clone, Copy)]
+    struct Unit<'a> {
+        lang: Language,
+        source: &'a [u8],
+        path: &'a Path,
+    }
+
+    /// Compute `metric` for one file via `backend`, as an entity→value map.
+    /// Function-level metrics key each entity as `path::name` (colliding closures
+    /// collapse, exactly as the production report's map does).
+    fn compute(metric: Metric, backend: Backend, unit: Unit) -> EntityValues {
+        let (source, path) = (unit.source, unit.path);
+        let rca_top = || unit.lang.parse_metrics(source.to_vec(), path);
         match metric {
             Metric::FileLines => single(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.loc.sloc().round() as u64),
-                    Backend::Native => native::analyze(Language::Rust, source).map(|a| a.file_lines()),
+                    Backend::Native => native::analyze(unit.lang, source).map(|a| a.file_lines()),
                 },
             ),
             Metric::FileFunctions => single(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| t.metrics.nom.total().round() as u64),
-                    Backend::Native => native::analyze(Language::Rust, source).map(|a| a.file_functions()),
+                    Backend::Native => native::analyze(unit.lang, source).map(|a| a.file_functions()),
                 },
             ),
             Metric::FunctionArgs | Metric::FunctionCyclomatic | Metric::FunctionLines | Metric::FunctionCognitive => keyed_by_path(
                 path,
                 match backend {
                     Backend::Rca => rca_top().map(|t| rca_function_metric(metric, &t)).unwrap_or_default(),
-                    Backend::Native => native::analyze(Language::Rust, source).map(|a| native_function_metric(metric, &a)).unwrap_or_default(),
+                    Backend::Native => native::analyze(unit.lang, source).map(|a| native_function_metric(metric, &a)).unwrap_or_default(),
                 },
             ),
         }
@@ -166,9 +175,9 @@ mod tests {
 
     /// Compare native and rca for `metric` on one file; `Ok` if they agree, else
     /// `Err` with a per-entity divergence report.
-    fn check_parity(metric: Metric, source: &[u8], path: &Path) -> Result<(), String> {
-        let rca = compute(metric, Backend::Rca, source, path);
-        let native = compute(metric, Backend::Native, source, path);
+    fn check_parity(metric: Metric, unit: Unit) -> Result<(), String> {
+        let rca = compute(metric, Backend::Rca, unit);
+        let native = compute(metric, Backend::Native, unit);
         match diff(metric, &rca, &native) {
             None => Ok(()),
             Some(report) => Err(report),
@@ -193,23 +202,32 @@ mod tests {
         Some(format!("{metric:?} parity divergence:\n{}", lines.join("\n")))
     }
 
-    /// Run `check_parity(metric, ..)` over every Rust file in the repo (ratchet's
-    /// own `src/` plus the fixtures), panicking on the first divergence.
-    fn assert_metric_parity_over_corpus(metric: Metric) {
+    /// Every file in the repo corpus with extension `ext`: ratchet's own `src/`
+    /// plus `tests/fixtures/`.
+    fn corpus(ext: &str) -> Vec<(std::path::PathBuf, Vec<u8>)> {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let mut checked = 0;
-        for entry in walkdir::WalkDir::new(root.join("src")).into_iter().chain(walkdir::WalkDir::new(root.join("tests/fixtures"))).filter_map(Result::ok) {
+        let dirs = [root.join("src"), root.join("tests/fixtures")];
+        let mut out = Vec::new();
+        for entry in dirs.iter().flat_map(walkdir::WalkDir::new).filter_map(Result::ok) {
             let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("rs") {
-                continue;
+            if path.extension().and_then(|e| e.to_str()) == Some(ext) {
+                let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
+                out.push((path.to_path_buf(), source));
             }
-            let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
-            if let Err(report) = check_parity(metric, &source, path) {
+        }
+        out
+    }
+
+    /// Run `check_parity(metric, ..)` over every corpus file for `lang`,
+    /// panicking on the first divergence.
+    fn assert_metric_parity_over_corpus(metric: Metric, lang: Language, ext: &str, least: usize) {
+        let files = corpus(ext);
+        assert!(files.len() >= least, "expected at least {least} .{ext} files, found {}", files.len());
+        for (path, source) in &files {
+            if let Err(report) = check_parity(metric, Unit { lang, source, path }) {
                 panic!("{report}");
             }
-            checked += 1;
         }
-        assert!(checked > 5, "expected to check several Rust files, checked {checked}");
     }
 
     /// Ordered function entity names rca produces — the walk-parity oracle.
@@ -221,9 +239,9 @@ mod tests {
     }
 
     /// Assert the native function walk matches rca's function list on `source`.
-    fn assert_function_walk_parity(source: &[u8], path: &Path) {
-        let rca = Language::Rust.parse_metrics(source.to_vec(), path).map(|top| rca_function_entities(&top)).unwrap_or_default();
-        let native = native::analyze(Language::Rust, source).map(|a| a.function_entities()).unwrap_or_default();
+    fn assert_function_walk_parity(lang: Language, source: &[u8], path: &Path) {
+        let rca = lang.parse_metrics(source.to_vec(), path).map(|top| rca_function_entities(&top)).unwrap_or_default();
+        let native = native::analyze(lang, source).map(|a| a.function_entities()).unwrap_or_default();
         assert_eq!(native, rca, "function-walk divergence in {}", path.display());
     }
 
@@ -238,34 +256,34 @@ mod tests {
     #[test]
     fn test_native_file_lines_matches_rca_on_a_snippet() {
         let src = b"fn add(a: i32, b: i32) -> i32 {\n    a + b\n}\n";
-        let path = Path::new("snippet.rs");
-        let rca = compute(Metric::FileLines, Backend::Rca, src, path);
+        let unit = Unit { lang: Language::Rust, source: src, path: Path::new("snippet.rs") };
+        let rca = compute(Metric::FileLines, Backend::Rca, unit);
         assert!(!rca.is_empty(), "rca should produce a file_lines value");
-        assert_eq!(compute(Metric::FileLines, Backend::Native, src, path), rca);
+        assert_eq!(compute(Metric::FileLines, Backend::Native, unit), rca);
     }
 
     #[test]
     fn test_native_file_functions_matches_rca_on_a_snippet() {
         let src = b"fn a() {}\nfn b() { let c = || 0; }\nstruct S;\nimpl S { fn m(&self) {} }\n";
-        let path = Path::new("snippet.rs");
-        let rca = compute(Metric::FileFunctions, Backend::Rca, src, path);
+        let unit = Unit { lang: Language::Rust, source: src, path: Path::new("snippet.rs") };
+        let rca = compute(Metric::FileFunctions, Backend::Rca, unit);
         assert!(!rca.is_empty(), "rca should produce a file_functions value");
-        assert_eq!(compute(Metric::FileFunctions, Backend::Native, src, path), rca);
+        assert_eq!(compute(Metric::FileFunctions, Backend::Native, unit), rca);
     }
 
     #[test]
     fn test_function_cyclomatic_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FunctionCyclomatic);
+        assert_metric_parity_over_corpus(Metric::FunctionCyclomatic, Language::Rust, "rs", 6);
     }
 
     #[test]
     fn test_function_lines_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FunctionLines);
+        assert_metric_parity_over_corpus(Metric::FunctionLines, Language::Rust, "rs", 6);
     }
 
     #[test]
     fn test_function_cognitive_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FunctionCognitive);
+        assert_metric_parity_over_corpus(Metric::FunctionCognitive, Language::Rust, "rs", 6);
     }
 
     /// Cognitive parity on constructs the repo corpus may under-exercise, each
@@ -284,7 +302,8 @@ mod tests {
             b"fn f() { while let Some(_) = None::<i32> { loop { break; } } }",
         ];
         for src in snippets {
-            if let Err(report) = check_parity(Metric::FunctionCognitive, src, Path::new("tricky.rs")) {
+            let unit = Unit { lang: Language::Rust, source: src, path: Path::new("tricky.rs") };
+            if let Err(report) = check_parity(Metric::FunctionCognitive, unit) {
                 panic!("{report}\n  source: {}", std::str::from_utf8(src).unwrap());
             }
         }
@@ -307,24 +326,44 @@ mod tests {
 
     #[test]
     fn test_file_lines_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FileLines);
+        assert_metric_parity_over_corpus(Metric::FileLines, Language::Rust, "rs", 6);
     }
 
     #[test]
     fn test_file_functions_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FileFunctions);
+        assert_metric_parity_over_corpus(Metric::FileFunctions, Language::Rust, "rs", 6);
     }
 
     #[test]
     fn test_function_args_parity_over_repo_corpus() {
-        assert_metric_parity_over_corpus(Metric::FunctionArgs);
+        assert_metric_parity_over_corpus(Metric::FunctionArgs, Language::Rust, "rs", 6);
+    }
+
+    /// The native JavaScript path (vendored mozjs grammar + JS rules) must agree
+    /// with rca on the JS corpus, for the walk and for every metric.
+    #[test]
+    fn test_javascript_function_walk_parity_over_corpus() {
+        let files = corpus("js");
+        assert!(files.len() >= 2, "expected JS fixtures, found {}", files.len());
+        for (path, source) in &files {
+            assert_function_walk_parity(Language::JavaScript, source, path);
+        }
+    }
+
+    #[test]
+    fn test_javascript_metric_parity_over_corpus() {
+        for metric in
+            [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionArgs, Metric::FunctionCyclomatic, Metric::FunctionCognitive]
+        {
+            assert_metric_parity_over_corpus(metric, Language::JavaScript, "js", 2);
+        }
     }
 
     #[test]
     fn test_function_walk_parity_on_tricky_constructs() {
         // Trait signature (excluded) vs defaulted method (included), module, async, generic.
         let src = b"trait T {\n    fn required(&self);\n    fn defaulted(&self) { let c = || 0; }\n}\nmod inner { pub fn nested() {} }\nasync fn a() {}\nfn generic<X>(x: X) -> X { x }\n";
-        assert_function_walk_parity(src, Path::new("tricky.rs"));
+        assert_function_walk_parity(Language::Rust, src, Path::new("tricky.rs"));
     }
 
     #[test]
@@ -337,7 +376,7 @@ mod tests {
                 continue;
             }
             let source = std::fs::read(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()));
-            assert_function_walk_parity(&source, path);
+            assert_function_walk_parity(Language::Rust, &source, path);
             checked += 1;
         }
         assert!(checked > 5, "expected to check several Rust files, checked {checked}");

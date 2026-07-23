@@ -28,6 +28,10 @@
 //! one known case that will need it is C/C++, whose names and argument lists hang
 //! off a `declarator` rather than a `name` field.
 
+use tree_sitter::Node;
+
+use super::analysis::{default_function_name, field_text, ANONYMOUS};
+
 /// The node kinds that drive each metric for one language.
 pub struct Rules {
     /// Kinds that form a function space (functions, methods, closures/lambdas).
@@ -64,6 +68,14 @@ pub struct Rules {
     /// Parent kind marking an `else if`, whose `if` must not add nesting (it is
     /// already scored by the `else`). `None` when the language has no such form.
     pub else_if_parent: Option<&'static str>,
+    /// Whether entering a `fn_kinds` space also resets the lambda weight. The JS
+    /// family does (rca zeroes `lambda` at a function declaration); Rust does not.
+    pub fn_resets_lambda: bool,
+    /// How a function's entity name is derived. Behaviour-as-data: the shared walk
+    /// just calls this, so naming never branches on a language. Most languages use
+    /// [`default_function_name`]; the JS family looks through a `pair` /
+    /// `variable_declarator` parent, and C/C++ will read its `declarator`.
+    pub name_of: fn(&Node, &[u8]) -> String,
 }
 
 impl Rules {
@@ -92,7 +104,73 @@ pub static RUST: Rules = Rules {
     bool_or_kinds: &["||"],
     label_kinds: &["label"],
     else_if_parent: Some("else_clause"),
+    fn_resets_lambda: false,
+    name_of: default_function_name,
 };
+
+/// JavaScript (including JSX) via the vendored mozjs grammar — the same grammar
+/// and rules rca applies to `.js`/`.mjs`/`.cjs`/`.jsx`.
+///
+/// Note the JS family differs from Rust in three ways beyond node names: a
+/// function declaration resets the lambda weight as well as nesting; every
+/// statement resets the boolean sequence; and `function_expression`/
+/// `method_definition`/generators are function *spaces* that are neither `fn` nor
+/// lambda for cognitive purposes (they inherit their context unchanged).
+pub static JAVASCRIPT: Rules = Rules {
+    function_kinds: &[
+        "function_declaration",
+        "generator_function_declaration",
+        "function_expression",
+        "generator_function",
+        "method_definition",
+        "arrow_function",
+    ],
+    fn_kinds: &["function_declaration"],
+    lambda_kinds: &["arrow_function"],
+    non_arg_kinds: &["(", ")", ","],
+    // rca's Mozjs cyclomatic: if/for/while keywords, switch `case`, `catch`,
+    // the ternary, and the boolean operators. Note `do` is not counted.
+    decision_kinds: &["if", "for", "while", "case", "catch", "ternary_expression", "&&", "||"],
+    cog_nesting_kinds: &[
+        "if_statement",
+        "for_statement",
+        "for_in_statement",
+        "while_statement",
+        "do_statement",
+        "switch_statement",
+        "catch_clause",
+        "ternary_expression",
+    ],
+    cog_flat_kinds: &["else"],
+    // rca's JS cognitive has no labeled break/continue rule.
+    cog_labeled_kinds: &[],
+    cog_reset_kinds: &["expression_statement"],
+    cog_binary_kinds: &["binary_expression"],
+    cog_unary_kinds: &["unary_expression"],
+    bool_and_kinds: &["&&"],
+    bool_or_kinds: &["||"],
+    label_kinds: &["statement_identifier"],
+    else_if_parent: Some("else_clause"),
+    fn_resets_lambda: true,
+    name_of: javascript_function_name,
+};
+
+/// rca's JS naming: an anonymous function takes its name from an enclosing
+/// `pair` (`foo: function () {}`) or `variable_declarator` (`var f = () => {}`).
+fn javascript_function_name(node: &Node, source: &[u8]) -> String {
+    if let Some(name) = field_text(node, "name", source) {
+        return name;
+    }
+    let borrowed = node.parent().and_then(|parent| {
+        let field = match parent.kind() {
+            "pair" => "key",
+            "variable_declarator" => "name",
+            _ => return None,
+        };
+        field_text(&parent, field, source)
+    });
+    borrowed.unwrap_or_else(|| ANONYMOUS.to_string())
+}
 
 #[cfg(test)]
 mod tests {

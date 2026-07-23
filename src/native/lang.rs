@@ -12,13 +12,16 @@
 use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
-use super::rules::{Rules, RUST};
+use super::rules::Rules;
+use super::rules::{JAVASCRIPT, RUST};
 use super::{analysis, complexity};
 use crate::language::Language;
 
 extern "C" {
     /// Entry point of the vendored, statically-linked Rust grammar (see `build.rs`).
     fn tree_sitter_rust() -> *const ();
+    /// Entry point of the vendored mozjs grammar — rca's JavaScript parser.
+    fn tree_sitter_mozjs() -> *const ();
 }
 
 /// One language's native implementation.
@@ -78,6 +81,22 @@ impl NativeLanguage for Rust {
 
 static RUST_LANG: Rust = Rust;
 
+/// JavaScript (including JSX), parsed with the vendored mozjs grammar. Uses the
+/// default glue — the JS family's differences are all expressed in its `Rules`.
+struct JavaScript;
+
+impl NativeLanguage for JavaScript {
+    fn grammar(&self) -> LanguageFn {
+        unsafe { LanguageFn::from_raw(tree_sitter_mozjs) }
+    }
+
+    fn rules(&self) -> &'static Rules {
+        &JAVASCRIPT
+    }
+}
+
+static JAVASCRIPT_LANG: JavaScript = JavaScript;
+
 /// Resolve a detected [`Language`] to its native implementation, or `None` when it
 /// has none yet (those languages still route through rca).
 ///
@@ -85,6 +104,7 @@ static RUST_LANG: Rust = Rust;
 pub fn for_language(lang: Language) -> Option<&'static dyn NativeLanguage> {
     match lang {
         Language::Rust => Some(&RUST_LANG),
+        Language::JavaScript => Some(&JAVASCRIPT_LANG),
         _ => None,
     }
 }

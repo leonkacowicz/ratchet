@@ -9,14 +9,20 @@ use tree_sitter::{Node, Tree};
 
 use super::rules::Rules;
 
-/// The entity name for a function node, matching rca's default
-/// `get_func_space_name`: the node's `name` field text, or `"<anonymous>"` when it
-/// has none. Note rca does **not** qualify methods by their type.
-pub fn function_name(node: &Node, source: &[u8]) -> String {
-    match node.child_by_field_name("name") {
-        Some(name) => std::str::from_utf8(&source[name.byte_range()]).unwrap_or("<anonymous>").to_string(),
-        None => "<anonymous>".to_string(),
-    }
+/// The name ratchet gives a function when the language has no better idea.
+pub const ANONYMOUS: &str = "<anonymous>";
+
+/// The text of `node`'s `field` child, if it has one.
+pub fn field_text(node: &Node, field: &str, source: &[u8]) -> Option<String> {
+    let child = node.child_by_field_name(field)?;
+    std::str::from_utf8(&source[child.byte_range()]).ok().map(str::to_string)
+}
+
+/// rca's *default* `get_func_space_name`: the node's `name` field text, or
+/// `"<anonymous>"`. Languages whose naming differs supply their own function via
+/// [`Rules::name_of`] — rca does **not** qualify methods by their type.
+pub fn default_function_name(node: &Node, source: &[u8]) -> String {
+    field_text(node, "name", source).unwrap_or_else(|| ANONYMOUS.to_string())
 }
 
 /// Visit every function space in the tree in pre-order, invoking `f(name, node)`.
@@ -28,7 +34,7 @@ pub fn visit_functions(rules: &Rules, tree: &Tree, source: &[u8], f: &mut impl F
         while i < node.named_child_count() {
             let child = node.named_child(i).expect("named_child within count");
             if rules.is_function(child.kind()) {
-                let name = function_name(&child, source);
+                let name = (rules.name_of)(&child, source);
                 f(&name, child);
             }
             recurse(rules, child, source, f);
