@@ -202,6 +202,16 @@ mod tests {
         Some(format!("{metric:?} parity divergence:\n{}", lines.join("\n")))
     }
 
+    /// Every metric the native path implements.
+    const ALL_METRICS: [Metric; 6] = [
+        Metric::FileLines,
+        Metric::FileFunctions,
+        Metric::FunctionLines,
+        Metric::FunctionArgs,
+        Metric::FunctionCyclomatic,
+        Metric::FunctionCognitive,
+    ];
+
     /// Every file in the repo corpus with extension `ext`: ratchet's own `src/`
     /// plus `tests/fixtures/`.
     fn corpus(ext: &str) -> Vec<(std::path::PathBuf, Vec<u8>)> {

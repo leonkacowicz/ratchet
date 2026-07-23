@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 28 |
+| backlog | 27 |
 | ongoing | 5 |
-| done | 18 |
+| done | 19 |
 | **total** | **51** |
 
 ## Hierarchies
@@ -46,9 +46,9 @@
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 16% (5/31 pts · 1/8 done) · _low_ · ongoing
+### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 32% (10/31 pts · 2/8 done) · _low_ · ongoing
 
-- [ ] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](backlog/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md) _(backlog)_
+- [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
 - [ ] [#9gkaehf Drop the rust-code-analysis dependency](backlog/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(backlog)_
 - [ ] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](backlog/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md) _(backlog)_
 - [ ] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](backlog/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md) _(backlog)_
@@ -64,7 +64,7 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 54% (30/56 pts · 10/17 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 62% (35/56 pts · 11/17 done) · _medium_ · ongoing
 
 - [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
 - [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
