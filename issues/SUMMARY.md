@@ -5,20 +5,21 @@
 
 | State | Count |
 |---|---:|
-| backlog | 28 |
+| backlog | 29 |
 | ongoing | 1 |
 | done | 1 |
-| **total** | **30** |
+| **total** | **31** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 15% (2/13 pts · 1/6 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 14% (2/14 pts · 1/7 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [ ] [#g72wvqb Rename workspace_root param to root](backlog/g72wvqb-rename-workspace-root-param-to-root.md) _(backlog)_
 - [ ] [#m9435x3 Distribution: cargo install & prebuilt binaries](backlog/m9435x3-distribution-cargo-install-prebuilt-binaries.md) _(backlog)_
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
+- [ ] [#s8y8set Bump CI actions off deprecated Node.js 20](backlog/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md) _(backlog)_
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 
 ### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/12 pts · 0/5 done) · _medium_ · backlog
