@@ -1,6 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+
+use crate::report::default_thresholds;
 
 /// Name of the config file discovered at the project root.
 pub const CONFIG_FILE: &str = "ratchet.json";
@@ -21,11 +24,15 @@ pub struct Config {
     /// Exclude globs matched against root-relative paths. Empty means exclude
     /// nothing.
     pub exclude: Vec<String>,
+    /// Per-category metric threshold overrides. Categories omitted here keep
+    /// their built-in default (see [`default_thresholds`]); an unknown category
+    /// name is rejected by [`Config::effective_thresholds`].
+    pub thresholds: BTreeMap<String, u64>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self { sources: vec![PathBuf::from("src")], include: Vec::new(), exclude: Vec::new() }
+        Self { sources: vec![PathBuf::from("src")], include: Vec::new(), exclude: Vec::new(), thresholds: BTreeMap::new() }
     }
 }
 
@@ -53,14 +60,62 @@ impl Config {
         let text = std::fs::read_to_string(path).with_context(|| format!("reading config {}", path.display()))?;
         serde_json::from_str(&text).with_context(|| format!("parsing config {}", path.display()))
     }
+
+    /// The effective metric thresholds: the built-in defaults with any
+    /// per-category overrides from the config applied on top. Errors if an
+    /// override names a category that is not a known metric.
+    pub fn effective_thresholds(&self) -> Result<BTreeMap<String, u64>> {
+        let mut thresholds = default_thresholds();
+        for (category, &value) in &self.thresholds {
+            if !thresholds.contains_key(category) {
+                bail!("unknown metric category in thresholds: {category}");
+            }
+            thresholds.insert(category.clone(), value);
+        }
+        Ok(thresholds)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::report::default_thresholds;
 
     fn tempdir() -> tempfile::TempDir {
         tempfile::tempdir().unwrap()
+    }
+
+    #[test]
+    fn test_effective_thresholds_defaults_to_builtin() {
+        let config = Config::default();
+        assert_eq!(config.effective_thresholds().unwrap(), default_thresholds());
+    }
+
+    #[test]
+    fn test_effective_thresholds_merges_partial_override() {
+        let config = Config { thresholds: [("file_lines".to_string(), 400)].into_iter().collect(), ..Config::default() };
+        let effective = config.effective_thresholds().unwrap();
+        // Overridden category takes the new value...
+        assert_eq!(effective.get("file_lines"), Some(&400));
+        // ...while every unspecified category keeps its built-in default.
+        assert_eq!(effective.get("function_lines"), default_thresholds().get("function_lines"));
+        assert_eq!(effective.len(), default_thresholds().len());
+    }
+
+    #[test]
+    fn test_effective_thresholds_rejects_unknown_category() {
+        let config = Config { thresholds: [("not_a_metric".to_string(), 10)].into_iter().collect(), ..Config::default() };
+        assert!(config.effective_thresholds().is_err());
+    }
+
+    #[test]
+    fn test_load_reads_partial_thresholds() {
+        let dir = tempdir();
+        std::fs::write(dir.path().join(CONFIG_FILE), r#"{"thresholds":{"file_lines":400}}"#).unwrap();
+        let config = Config::load(dir.path(), None).unwrap();
+        let effective = config.effective_thresholds().unwrap();
+        assert_eq!(effective.get("file_lines"), Some(&400));
+        assert_eq!(effective.get("function_lines"), Some(&50));
     }
 
     #[test]

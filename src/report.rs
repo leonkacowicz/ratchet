@@ -59,9 +59,9 @@ pub fn default_thresholds() -> BTreeMap<String, u64> {
     t
 }
 
-/// Run all collectors over the selected sources and produce a report.
-pub fn generate(root: &Path, sources: &Sources) -> Result<Report> {
-    let thresholds = default_thresholds();
+/// Run all collectors over the selected sources and produce a report using the
+/// given per-category thresholds.
+pub fn generate(root: &Path, sources: &Sources, thresholds: BTreeMap<String, u64>) -> Result<Report> {
     let collectors: Vec<Box<dyn Collector>> = vec![Box::new(crate::collectors::structural::Structural::new(thresholds.clone()))];
 
     let mut violations: CategoryMap = thresholds.keys().map(|k| (k.clone(), BTreeMap::new())).collect();
@@ -78,6 +78,26 @@ pub fn generate(root: &Path, sources: &Sources) -> Result<Report> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::Config;
+    use crate::sources::Sources;
+
+    #[test]
+    fn test_generate_uses_supplied_thresholds() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("src")).unwrap();
+        std::fs::write(dir.path().join("src/f.rs"), "pub fn f(a: i32, b: i32, c: i32) -> i32 { a + b + c }\n").unwrap();
+        let sources = Sources::from_config(&Config::default()).unwrap();
+
+        let mut thresholds = default_thresholds();
+        thresholds.insert("function_args".into(), 2);
+        let report = generate(dir.path(), &sources, thresholds.clone()).unwrap();
+
+        // The report embeds exactly the thresholds it was generated with...
+        assert_eq!(report.thresholds, thresholds);
+        // ...and the collector applies them: a 3-arg fn is excess 1 over the
+        // overridden threshold of 2.
+        assert_eq!(report.violations["function_args"].get("src/f.rs::f"), Some(&1));
+    }
 
     #[test]
     fn test_compute_totals_sums_violations_per_category() {

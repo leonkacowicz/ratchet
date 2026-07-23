@@ -28,7 +28,7 @@ source files → collectors/ (metrics) → report (excess vs threshold) → ratc
 | Path | Responsibility |
 |---|---|
 | `src/main.rs` | CLI entry point and the `generate` / `check` / `compare` / `dump` verbs |
-| `src/config.rs` | `Config` — the optional `ratchet.json` (source roots + include/exclude globs) |
+| `src/config.rs` | `Config` — the optional `ratchet.json` (source roots + include/exclude globs + per-category threshold overrides, resolved via `effective_thresholds`) |
 | `src/sources.rs` | `Sources` — compiles the config into glob sets and discovers `(path, Language)` pairs |
 | `src/language.rs` | `Language` — extension→parser dispatch (Rust / C/C++ / Python / Java / JavaScript / TypeScript / TSX) |
 | `src/collectors/mod.rs` | `Collector` trait — extracts a `category → entity → excess` map from one source |
@@ -48,11 +48,11 @@ tier is opinionated and ours.
 **Current scope.** Rust, C/C++, Python, Java, JavaScript, TypeScript, and TSX — the
 languages `rust-code-analysis` measures with full metric coverage. Files are dispatched to
 a parser by extension (`src/language.rs`, mirroring rca's own extension routing); source
-roots and include/exclude globs come from an optional `ratchet.json` (`src/config.rs` →
-`src/sources.rs`), defaulting to scanning `src`. `#[cfg(test)]` stripping applies to Rust
-only. Runnable per-language examples live in `tests/fixtures/`. Further languages (Kotlin,
-Go via an external tool), thresholds-in-config, and organizational metrics are the
-roadmap — see issue tracking below.
+roots, include/exclude globs, and per-category threshold overrides come from an optional
+`ratchet.json` (`src/config.rs` → `src/sources.rs`), defaulting to scanning `src` with the
+built-in thresholds. `#[cfg(test)]` stripping applies to Rust only. Runnable per-language
+examples live in `tests/fixtures/`. Further languages (Kotlin, Go via an external tool) and
+organizational metrics are the roadmap — see issue tracking below.
 
 ---
 

@@ -99,7 +99,8 @@ with `--config PATH`), it is loaded; otherwise defaults apply. All fields are op
 {
   "sources": ["src"],
   "include": [],
-  "exclude": ["**/*.d.ts", "**/*.test.ts"]
+  "exclude": ["**/*.d.ts", "**/*.test.ts"],
+  "thresholds": { "function_lines": 60, "file_lines": 400 }
 }
 ```
 
@@ -107,9 +108,15 @@ with `--config PATH`), it is loaded; otherwise defaults apply. All fields are op
 - **`include`** — glob patterns (matched against root-relative paths). When non-empty, a
   file must match at least one. Empty means include every supported file.
 - **`exclude`** — glob patterns; a matching file is skipped. Empty means exclude nothing.
+- **`thresholds`** — per-category overrides of the built-in yellow-flag levels
+  (`function_lines` 50, `function_cognitive` 10, `function_cyclomatic` 10, `function_args` 4,
+  `file_lines` 300, `file_functions` 20, `module_files` 20). Only the categories you name are
+  overridden; the rest keep their defaults. An unknown category name is an error. Because the
+  effective thresholds are recorded in `quality-report.json`, a threshold change must land in
+  its own PR — `compare` rejects a report whose thresholds differ from the baseline's.
 
 Defaults reproduce the original behaviour: scan `src` for every supported language with no
-glob filtering.
+glob filtering and the built-in thresholds.
 
 ## Continuous integration
 
@@ -132,5 +139,5 @@ building the binary (or `cargo install --git https://github.com/leonkacowicz/rat
 
 Early standalone extraction. Analyzes **Rust**, **C/C++**, **Python**, **Java**,
 **JavaScript**, **TypeScript**, and **TSX** across configurable source roots with
-include/exclude globs. Further languages (Kotlin, Go via an external tool), thresholds in
-config, and organizational metrics are tracked in the issue tracker (`trck`).
+include/exclude globs and configurable thresholds. Further languages (Kotlin, Go via an
+external tool) and organizational metrics are tracked in the issue tracker (`trck`).

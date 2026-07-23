@@ -54,9 +54,12 @@ fn main() -> Result<()> {
     run(cli.command, &root, cli.config.as_deref())
 }
 
-/// Load the config for `root` and compile it into a source selector.
-fn load_sources(root: &Path, config: Option<&Path>) -> Result<Sources> {
-    Sources::from_config(&Config::load(root, config)?)
+/// Load the config, compile its source selector, and generate a report using
+/// the config's effective thresholds.
+fn build_report(root: &Path, config: Option<&Path>) -> Result<Report> {
+    let cfg = Config::load(root, config)?;
+    let sources = Sources::from_config(&cfg)?;
+    report::generate(root, &sources, cfg.effective_thresholds()?)
 }
 
 /// Resolve the `--root` argument to an absolute path, failing early if it does
@@ -76,7 +79,7 @@ fn run(cmd: Cmd, root: &Path, config: Option<&Path>) -> Result<()> {
 
 /// Generate the report and write it to `<root>/quality-report.json`.
 fn cmd_generate(root: &Path, config: Option<&Path>) -> Result<()> {
-    let report = report::generate(root, &load_sources(root, config)?)?;
+    let report = build_report(root, config)?;
     report.write_to(&root.join(REPORT_FILE))?;
     println!("wrote {}", root.join(REPORT_FILE).display());
     Ok(())
@@ -84,7 +87,7 @@ fn cmd_generate(root: &Path, config: Option<&Path>) -> Result<()> {
 
 /// Fail if the committed report no longer matches the current codebase.
 fn cmd_check(root: &Path, config: Option<&Path>) -> Result<()> {
-    let actual = report::generate(root, &load_sources(root, config)?)?;
+    let actual = build_report(root, config)?;
     let committed = read_committed(root)?;
     if actual != committed {
         bail!(
