@@ -17,7 +17,7 @@ jobs:
     name: Build, lint & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -41,7 +41,7 @@ jobs:
       # Hand the freshly built binary to the quality job so it doesn't recompile
       # the (slow) rust-code-analysis dependency a second time.
       - name: Upload ratchet binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ratchet
           path: target/release/ratchet
@@ -52,14 +52,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history so `git show <base>:quality-report.json` can resolve the
           # baseline report during `ratchet compare`.
           fetch-depth: 0
 
       - name: Download ratchet binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ratchet
           path: bin
