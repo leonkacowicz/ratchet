@@ -32,22 +32,25 @@ source files → collectors/ (metrics) → report (excess vs threshold) → ratc
 | `src/sources.rs` | `Sources` — compiles the config into glob sets and discovers `(path, Language)` pairs |
 | `src/language.rs` | `Language` — extension→parser dispatch (Rust / C/C++ / Python / Java / JavaScript / TypeScript / TSX) |
 | `src/collectors/mod.rs` | `Collector` trait — extracts a `category → entity → excess` map from one source |
-| `src/collectors/structural.rs` | The only collector today: per-file metrics via `rust-code-analysis` (tree-sitter based) plus directory-level aggregation |
+| `src/collectors/structural.rs` | The only collector today: per-file metrics via the native tree-sitter path (`native::analyze`) plus directory-level aggregation |
+| `src/native/` | The rca-free metric engine: parses once per file (`analyze` → `Analysis`) and computes SLOC / cognitive / cyclomatic / nargs / function counts via per-language rules (`native/rules/`) |
 | `src/report.rs` | `Report` type, thresholds, per-category totals, deterministic JSON |
 | `src/ratchet.rs` | The two ratchet rules comparing a baseline report to the current one |
 
-**Metric tiers.** tree-sitter parses; `rust-code-analysis` computes the metrics
-(SLOC / cognitive / cyclomatic / nargs / function counts) into a `FuncSpace` tree; this
-crate turns those numbers into policy (thresholds, report format, ratchet). Only the last
-tier is opinionated and ours.
+**Metric tiers.** tree-sitter parses; ratchet's own native rules (`src/native/`) compute the
+metrics (SLOC / cognitive / cyclomatic / nargs / function counts) directly from the parse
+tree; the policy tier turns those numbers into thresholds, report format, and the ratchet.
+Both the metric definitions and the policy are ours — there is no external metric engine, so
+the grammar versions are not load-bearing (a metric shift from a grammar bump is caught by
+the golden test and re-blessed deliberately).
 
 **The ratchet rules** (per category, in `ratchet.rs`): (1) no existing entity may worsen;
 (2) no category total may grow. Together these make splitting a fat file/function *pass*
 (total drops), renames neutral, and categories ratchet independently.
 
 **Current scope.** Rust, C/C++, Python, Java, JavaScript, TypeScript, and TSX — the
-languages `rust-code-analysis` measures with full metric coverage. Files are dispatched to
-a parser by extension (`src/language.rs`, mirroring rca's own extension routing); source
+languages ratchet implements with full metric coverage. Files are dispatched to
+a parser by extension (`src/language.rs`); source
 roots, include/exclude globs, and per-category threshold overrides come from an optional
 `ratchet.json` (`src/config.rs` → `src/sources.rs`), defaulting to scanning `src` with the
 built-in thresholds. `#[cfg(test)]` stripping applies to Rust only. Runnable per-language
@@ -108,7 +111,7 @@ There is **no** GitHub issues usage — trck is the source of truth.
 ### Roadmap shape
 
 Epics (see `trck list`): **Configuration file support** (foundation), **Multi-language
-support** (extension dispatch → enable the rca languages → uneven-coverage handling →
+support** (extension dispatch → enable the tree-sitter languages → uneven-coverage handling →
 Kotlin → Go via an external-tool collector), **Organizational & structural metrics**
 (functions/lines/types per module, pub-API surface, test ratio), **Module relationship &
 dependency metrics** (import graph → coupling / cycles / layering; long-horizon),

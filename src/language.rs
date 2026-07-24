@@ -1,20 +1,19 @@
 /// A source language ratchet can parse and measure.
 ///
-/// The set is intentionally narrow: only languages whose metrics are fully
-/// implemented in `rust-code-analysis` are enabled. Widening it is a deliberate
-/// step (e.g. Kotlin parses but has no complexity metrics), tracked separately
-/// in the multi-language roadmap.
+/// The set is intentionally narrow: only languages whose metrics ratchet fully
+/// implements are enabled. Widening it is a deliberate step (e.g. Kotlin parses
+/// but has no complexity metrics), tracked separately in the multi-language roadmap.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     Rust,
     TypeScript,
     Tsx,
-    /// C and C++ (and C-family headers), both handled by rca's `tree-sitter-cpp`.
+    /// C and C++ (and C-family headers), both handled by `tree-sitter-cpp`.
     Cpp,
     Python,
     Java,
-    /// JavaScript (including JSX), via rca's Mozjs grammar — the parser rca itself
-    /// routes `.js`/`.mjs`/`.jsx` files to.
+    /// JavaScript (including JSX), via the vendored Mozjs grammar, which handles
+    /// `.js`/`.mjs`/`.cjs`/`.jsx`.
     JavaScript,
 }
 
@@ -22,8 +21,8 @@ impl Language {
     /// Map a file extension (without the leading dot) to a supported language,
     /// or `None` when ratchet does not analyze that extension.
     ///
-    /// Extension sets mirror `rust-code-analysis`'s own file-extension routing so
-    /// ratchet measures each file with the grammar rca would pick for it.
+    /// Extension routing follows the conventional per-grammar mapping (e.g.
+    /// `.js`/`.jsx` → Mozjs, `.tsx` → the TSX grammar, C-family headers → cpp).
     pub fn from_extension(ext: &str) -> Option<Self> {
         match ext {
             "rs" => Some(Self::Rust),

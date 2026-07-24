@@ -16,7 +16,7 @@ const CATEGORY_FILE_FUNCTIONS: &str = "file_functions";
 const CATEGORY_FILE_LINES: &str = "file_lines";
 const CATEGORY_MODULE_FILES: &str = "module_files";
 
-/// Structural metrics collector backed by `rust-code-analysis`.
+/// Structural metrics collector backed by the native tree-sitter path (`src/native/`).
 ///
 /// Parses every source file the [`Sources`] selector discovers, dispatching to
 /// the right grammar per file, and emits per-function and per-file excess

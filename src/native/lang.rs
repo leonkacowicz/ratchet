@@ -37,8 +37,8 @@ static PYTHON_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_pytho
 static JAVA_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_java::LANGUAGE, rules: &JAVA };
 static TYPESCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TYPESCRIPT, rules: &JS_FAMILY };
 static TSX_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TSX, rules: &JS_FAMILY };
-/// JavaScript/JSX uses the vendored mozjs fork, the grammar rca routes `.js`,
-/// `.mjs`, `.cjs` and `.jsx` to.
+/// JavaScript/JSX uses the vendored mozjs fork, which handles `.js`, `.mjs`,
+/// `.cjs` and `.jsx`.
 static JAVASCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: unsafe { LanguageFn::from_raw(tree_sitter_mozjs) }, rules: &JS_FAMILY };
 
 /// Resolve a detected [`Language`] to its native implementation.
@@ -46,9 +46,9 @@ static JAVASCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: unsafe { Lang
 /// **This is the single dispatch point on `Language` in the native path.**
 ///
 /// Every language ratchet supports now has one, so the match is exhaustive and
-/// this never returns `None` — the `Option` is kept because `structural.rs` still
-/// treats a missing implementation as "fall back to rca", the seam that
-/// disappears when rca is dropped.
+/// this never returns `None` — the `Option` is kept as the seam for a future
+/// language that parses but isn't yet measured, which callers (`structural.rs`)
+/// handle by skipping the file.
 pub fn for_language(lang: Language) -> Option<&'static NativeLanguage> {
     Some(match lang {
         Language::Rust => &RUST_LANG,

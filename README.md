@@ -14,8 +14,8 @@ elsewhere in the same category.
 
 ## Metrics
 
-Structural metrics are extracted per file via
-[`rust-code-analysis`](https://github.com/mozilla/rust-code-analysis) (tree-sitter based),
+Structural metrics are computed per file from a
+[tree-sitter](https://tree-sitter.github.io/) parse by ratchet's own metric rules,
 plus directory-level aggregation. Each metric has a threshold; the report records only
 the **excess over threshold** per entity.
 
@@ -123,8 +123,8 @@ between baseline and HEAD is rejected, forcing it into its own reviewable PR.
 
 ## Languages
 
-Files are dispatched to a grammar by extension. The enabled set is exactly the languages
-`rust-code-analysis` measures with full metric coverage:
+Files are dispatched to a grammar by extension. The enabled set is the languages with full
+metric coverage:
 
 | Language | Extensions | Grammar |
 |---|---|---|
@@ -136,7 +136,7 @@ Files are dispatched to a grammar by extension. The enabled set is exactly the l
 | TypeScript | `.ts` | tree-sitter-typescript |
 | TSX | `.tsx` | tree-sitter-tsx |
 
-Extension routing mirrors rust-code-analysis's own (e.g. `.js`/`.jsx` go to the Mozjs
+Extension routing follows the conventional mapping (e.g. `.js`/`.jsx` go to the Mozjs
 grammar; `tree-sitter-cpp` covers both C and C++). Only files with a supported extension
 are analyzed; anything else under the source roots is ignored. `#[cfg(test)]` module
 stripping applies to Rust files only. Runnable examples live in
@@ -178,7 +178,7 @@ built binary, not a third-party code-quality service:
 
 1. **Build, lint & test** — `cargo fmt --check`, `cargo clippy -D warnings`,
    `cargo build --release --locked`, `cargo test`. The release binary is passed to the
-   next job as an artifact so the (slow) `rust-code-analysis` dependency compiles once.
+   next job as an artifact so the (slow) tree-sitter grammar builds happen once.
 2. **Code-quality ratchet** — `ratchet check` fails the build if the committed
    `quality-report.json` is stale, and on pull requests `ratchet compare` fails it if any
    metric regresses against the base branch.

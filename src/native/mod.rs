@@ -35,8 +35,8 @@ use lang::NativeLanguage;
 
 use rules::Rules;
 
-/// Whether ratchet can measure `lang` natively (it has a vendored grammar and a
-/// rule set). Everything else still routes through rca.
+/// Whether ratchet can measure `lang` natively — it has a grammar and a rule set.
+/// Every currently-supported language does (see [`lang::for_language`]).
 pub fn supports(lang: Language) -> bool {
     lang::for_language(lang).is_some()
 }

@@ -1,6 +1,5 @@
 //! Counting metrics over the raw tree-sitter tree: SLOC by node span, function
-//! counts, and argument counts. Each mirrors the corresponding
-//! `rust-code-analysis` computation, parameterized by the language's [`Rules`].
+//! counts, and argument counts, parameterized by the language's [`Rules`].
 
 use tree_sitter::Node;
 
