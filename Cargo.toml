@@ -20,16 +20,14 @@ tree-sitter-language = "0.1"
 # Grammars are ordinary registry dependencies. ratchet defines its own metrics, so the
 # exact grammar version isn't load-bearing — these track the latest compatible release,
 # and any resulting metric shift is caught by the golden test (`tests/fixtures/golden.json`)
-# and re-blessed deliberately. Only Mozilla's unpublished forks are vendored (see `vendor/`).
+# and re-blessed deliberately.
 tree-sitter-rust       = "0.24"
 tree-sitter-cpp        = "0.23"
 tree-sitter-java       = "0.23"
 tree-sitter-python     = "0.25"
 tree-sitter-typescript = "0.23"
+tree-sitter-javascript = "0.25"
 walkdir            = "2"
-
-[build-dependencies]
-cc                 = "1"
 
 [dev-dependencies]
 tempfile           = "3"

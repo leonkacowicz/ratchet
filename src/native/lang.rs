@@ -18,12 +18,6 @@ use tree_sitter_language::LanguageFn;
 use super::rules::{Rules, CPP, JAVA, JS_FAMILY, PYTHON, RUST};
 use crate::language::Language;
 
-extern "C" {
-    /// Entry point of the vendored mozjs grammar (see `build.rs`). Mozilla's JS
-    /// fork is not published, so it is the one grammar ratchet vendors.
-    fn tree_sitter_mozjs() -> *const ();
-}
-
 /// One language's native implementation: the grammar that parses it and the node
 /// kinds that drive its metrics.
 pub struct NativeLanguage {
@@ -37,9 +31,9 @@ static PYTHON_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_pytho
 static JAVA_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_java::LANGUAGE, rules: &JAVA };
 static TYPESCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TYPESCRIPT, rules: &JS_FAMILY };
 static TSX_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TSX, rules: &JS_FAMILY };
-/// JavaScript/JSX uses the vendored mozjs fork, which handles `.js`, `.mjs`,
-/// `.cjs` and `.jsx`.
-static JAVASCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: unsafe { LanguageFn::from_raw(tree_sitter_mozjs) }, rules: &JS_FAMILY };
+/// JavaScript uses `tree-sitter-javascript`, whose grammar also covers JSX, so
+/// `.js`, `.mjs`, `.cjs` and `.jsx` all route here.
+static JAVASCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_javascript::LANGUAGE, rules: &JS_FAMILY };
 
 /// Resolve a detected [`Language`] to its native implementation.
 ///

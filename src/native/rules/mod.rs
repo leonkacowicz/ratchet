@@ -6,22 +6,22 @@
 //! kinds play each role — plus a couple of structural quirks. Those live here, so
 //! adding a language is mostly a matter of supplying its kinds and a grammar.
 //!
-//! Every set mirrors what `rust-code-analysis` matches for that language, since
-//! rca is the parity oracle each migration is verified against.
+//! Every set was derived to match what `rust-code-analysis` computed for that
+//! language; with rca gone, the golden fixtures (see `golden.rs`) are the
+//! regression net that pins each metric.
 //!
 //! # Adding a language
 //!
 //! The metric code is language-agnostic — a new language supplies *data*, not
 //! algorithms:
 //!
-//! 1. Vendor its grammar under `vendor/<grammar>/` (`parser.c`, any
-//!    `scanner.{c,cc}`, the `tree_sitter/` headers, its `LICENSE`) and add one
-//!    `compile_grammar(..)` call in `build.rs`.
-//! 2. Declare its `tree_sitter_<lang>()` extern and add one arm to
-//!    `native::grammar` — that is all [`super::supports`] needs.
-//! 3. Add a `Rules` entry here and map it in [`for_language`].
-//! 4. Verify against rca with the parity harness (`parity`'s corpus tests) and
-//!    add fixtures under `tests/fixtures/` exercising the language's constructs.
+//! 1. Add its published grammar crate (`tree-sitter-<lang>`) to `Cargo.toml`.
+//! 2. Add a `NativeLanguage` wiring that grammar's `LANGUAGE` in [`super::lang`]
+//!    and one arm to [`super::lang::for_language`] — that is all
+//!    [`super::supports`] needs.
+//! 3. Add a `Rules` entry here describing its node kinds.
+//! 4. Add fixtures under `tests/fixtures/` exercising the language's constructs,
+//!    then bless the golden (`RATCHET_BLESS_GOLDEN=1 cargo test golden`).
 //!
 //! Nothing else should need editing. If a language cannot be expressed by these
 //! fields, prefer adding a field here over branching inside the algorithms — the

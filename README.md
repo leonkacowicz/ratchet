@@ -132,12 +132,12 @@ metric coverage:
 | C / C++ | `.c` `.cc` `.cpp` `.cxx` `.h` `.hh` `.hpp` `.hxx` | tree-sitter-cpp |
 | Python | `.py` | tree-sitter-python |
 | Java | `.java` | tree-sitter-java |
-| JavaScript | `.js` `.mjs` `.cjs` `.jsx` | tree-sitter-mozjs |
+| JavaScript | `.js` `.mjs` `.cjs` `.jsx` | tree-sitter-javascript |
 | TypeScript | `.ts` | tree-sitter-typescript |
 | TSX | `.tsx` | tree-sitter-tsx |
 
-Extension routing follows the conventional mapping (e.g. `.js`/`.jsx` go to the Mozjs
-grammar; `tree-sitter-cpp` covers both C and C++). Only files with a supported extension
+Extension routing follows the conventional mapping (e.g. `.js`/`.jsx` go to
+tree-sitter-javascript; `tree-sitter-cpp` covers both C and C++). Only files with a supported extension
 are analyzed; anything else under the source roots is ignored. `#[cfg(test)]` module
 stripping applies to Rust files only. Runnable examples live in
 [`tests/fixtures/`](tests/fixtures), one per language.

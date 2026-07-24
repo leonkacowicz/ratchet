@@ -12,7 +12,7 @@ pub enum Language {
     Cpp,
     Python,
     Java,
-    /// JavaScript (including JSX), via the vendored Mozjs grammar, which handles
+    /// JavaScript (including JSX), via `tree-sitter-javascript`, which handles
     /// `.js`/`.mjs`/`.cjs`/`.jsx`.
     JavaScript,
 }
@@ -22,7 +22,8 @@ impl Language {
     /// or `None` when ratchet does not analyze that extension.
     ///
     /// Extension routing follows the conventional per-grammar mapping (e.g.
-    /// `.js`/`.jsx` → Mozjs, `.tsx` → the TSX grammar, C-family headers → cpp).
+    /// `.js`/`.jsx` → tree-sitter-javascript, `.tsx` → the TSX grammar,
+    /// C-family headers → cpp).
     pub fn from_extension(ext: &str) -> Option<Self> {
         match ext {
             "rs" => Some(Self::Rust),
