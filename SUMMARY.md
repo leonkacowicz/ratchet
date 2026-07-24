@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 24 |
+| backlog | 23 |
 | ongoing | 5 |
-| done | 22 |
+| done | 23 |
 | **total** | **51** |
 
 ## Hierarchies
@@ -46,7 +46,7 @@
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 65% (20/31 pts · 5/8 done) · _low_ · ongoing
+### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 77% (24/31 pts · 6/8 done) · _low_ · ongoing
 
 - [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
 - [ ] [#9gkaehf Drop the rust-code-analysis dependency](backlog/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(backlog)_
@@ -54,7 +54,7 @@
 - [x] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](done/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md)
 - [x] [#knau82g Generalize the native layer to be language-parameterized](done/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
 - [x] [#q6dbjtq Native metrics for Python (vendor tree-sitter-python)](done/q6dbjtq-native-metrics-for-python-vendor-tree-sitter-python.md)
-- [ ] [#skcztyt Native metrics for Java (vendor tree-sitter-java)](backlog/skcztyt-native-metrics-for-java-vendor-tree-sitter-java.md) _(backlog)_
+- [x] [#skcztyt Native metrics for Java (vendor tree-sitter-java)](done/skcztyt-native-metrics-for-java-vendor-tree-sitter-java.md)
 - [ ] [#xemvnh6 Native metrics for C/C++ (vendor tree-sitter-cpp)](backlog/xemvnh6-native-metrics-for-c-c-vendor-tree-sitter-cpp.md) _(backlog)_
 
 ### [#ez785p3 Configuration file support](ongoing/ez785p3-configuration-file-support.md) — 73% (8/11 pts · 3/4 done) · _high_ · ongoing
@@ -64,7 +64,7 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 80% (45/56 pts · 14/17 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 88% (49/56 pts · 15/17 done) · _medium_ · ongoing
 
 - [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
 - [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
