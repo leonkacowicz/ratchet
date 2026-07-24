@@ -73,14 +73,28 @@ without a Rust toolchain) can skip compiling:
 | macOS Intel | `ratchet-<tag>-x86_64-apple-darwin.tar.gz` |
 | Windows x86-64 | `ratchet-<tag>-x86_64-pc-windows-msvc.zip` |
 
-Each archive ships a matching `.sha256`; verify with `shasum -c <asset>.sha256`
-(`sha256sum -c` on Linux). Download, extract, and put `ratchet` on your `PATH`. For
-example, on Linux:
+Each archive ships a matching `.sha256`. The quickest route on Linux or macOS is the
+install script, which detects your platform, downloads the right asset, **verifies its
+checksum**, and installs the binary:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/leonkacowicz/ratchet/main/install.sh | sh
+```
+
+By default it installs the latest release to `~/.local/bin`. Override with flags or env
+vars — `--version <tag>` / `RATCHET_VERSION`, `--bin-dir <dir>` / `RATCHET_BIN_DIR` (or set
+`PREFIX`) — and `--dry-run` prints what it would do without touching anything. Windows is
+not covered by the script; grab the `.zip` from the releases page.
+
+Prefer to do it by hand? Download, verify, and install directly:
 
 ```sh
 tag=v0.1.0
-curl -fsSL -O https://github.com/leonkacowicz/ratchet/releases/download/$tag/ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
-tar xzf ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
+base=https://github.com/leonkacowicz/ratchet/releases/download/$tag
+asset=ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
+curl -fsSL -O $base/$asset -O $base/$asset.sha256
+sha256sum -c $asset.sha256          # `shasum -a 256 -c` on macOS
+tar xzf $asset
 sudo install ratchet /usr/local/bin/
 ```
 
