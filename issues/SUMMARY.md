@@ -7,12 +7,12 @@
 |---|---:|
 | backlog | 21 |
 | ongoing | 3 |
-| done | 32 |
-| **total** | **56** |
+| done | 33 |
+| **total** | **57** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 60% (15/25 pts · 7/12 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 63% (17/27 pts · 8/13 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
@@ -26,6 +26,7 @@
 - [x] [#uuf98vh Standalone install script for prebuilt binaries](done/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
 - [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](done/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
 - [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](done/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
+- [x] [#z9cywvc Drop vendored mozjs for published tree-sitter-javascript](done/z9cywvc-drop-vendored-mozjs-for-published-tree-sitter-javascript.md)
 
 ### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
 
