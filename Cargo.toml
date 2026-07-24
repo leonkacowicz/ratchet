@@ -21,7 +21,7 @@ tree-sitter-language = "0.1"
 # exact grammar version isn't load-bearing — these track the latest compatible release,
 # and any resulting metric shift is caught by the golden test (`tests/fixtures/golden.json`)
 # and re-blessed deliberately. Only Mozilla's unpublished forks are vendored (see `vendor/`).
-tree-sitter-rust       = "0.23"
+tree-sitter-rust       = "0.24"
 tree-sitter-cpp        = "0.23"
 tree-sitter-java       = "0.23"
 tree-sitter-python     = "0.25"
