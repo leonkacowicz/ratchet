@@ -118,10 +118,12 @@ impl Rules {
 /// that same parent against `typs` (`ElseClause`), which always holds. The guard
 /// therefore admits every `else`. A conditional expression's `else` still does not
 /// count: its parent is the expression, not an `else_clause`.
+mod java;
 mod js;
 mod python;
 mod rust;
 
+pub use java::JAVA;
 pub use js::JS_FAMILY;
 pub use python::PYTHON;
 pub use rust::RUST;

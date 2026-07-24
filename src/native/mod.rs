@@ -103,7 +103,8 @@ mod tests {
     fn test_supports_native_languages_but_not_the_rest() {
         assert!(supports(Language::Rust));
         assert!(supports(Language::Python));
-        assert!(!supports(Language::Java));
+        assert!(supports(Language::Java));
+        assert!(!supports(Language::Cpp));
     }
 
     #[test]
@@ -133,6 +134,6 @@ mod tests {
 
     #[test]
     fn test_analyze_returns_none_for_a_language_without_a_grammar() {
-        assert!(analyze(Language::Java, b"class A {}").is_none());
+        assert!(analyze(Language::Cpp, b"int main() { return 0; }").is_none());
     }
 }

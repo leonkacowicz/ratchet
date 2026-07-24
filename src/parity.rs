@@ -253,8 +253,9 @@ mod tests {
     fn test_native_dispatch_covers_the_migrated_languages() {
         assert!(native::supports(Language::Rust));
         assert!(native::supports(Language::Python));
+        assert!(native::supports(Language::Java));
         // Never native for a language whose grammar isn't vendored yet.
-        assert!(!native::supports(Language::Java));
+        assert!(!native::supports(Language::Cpp));
         assert_eq!(Metric::FileLines.backend(), Backend::Native);
     }
 
@@ -417,6 +418,19 @@ mod tests {
         }
         for metric in ALL_METRICS {
             assert_metric_parity_over_corpus(metric, Language::Python, "py", 2);
+        }
+    }
+
+    /// Java must agree with rca on the walk and on every metric.
+    #[test]
+    fn test_java_parity_over_corpus() {
+        let files = corpus("java");
+        assert!(files.len() >= 2, "expected .java fixtures, found {}", files.len());
+        for (path, source) in &files {
+            assert_function_walk_parity(Language::Java, source, path);
+        }
+        for metric in ALL_METRICS {
+            assert_metric_parity_over_corpus(metric, Language::Java, "java", 2);
         }
     }
 

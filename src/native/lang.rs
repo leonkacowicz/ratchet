@@ -13,7 +13,7 @@ use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
 use super::rules::Rules;
-use super::rules::{JS_FAMILY, PYTHON, RUST};
+use super::rules::{JAVA, JS_FAMILY, PYTHON, RUST};
 use super::{analysis, cognitive, cyclomatic};
 use crate::language::Language;
 
@@ -141,6 +141,21 @@ impl NativeLanguage for Python {
 
 static PYTHON_LANG: Python = Python;
 
+/// Java.
+struct Java;
+
+impl NativeLanguage for Java {
+    fn grammar(&self) -> LanguageFn {
+        tree_sitter_java::LANGUAGE
+    }
+
+    fn rules(&self) -> &'static Rules {
+        &JAVA
+    }
+}
+
+static JAVA_LANG: Java = Java;
+
 /// Resolve a detected [`Language`] to its native implementation, or `None` when it
 /// has none yet (those languages still route through rca).
 ///
@@ -152,6 +167,7 @@ pub fn for_language(lang: Language) -> Option<&'static dyn NativeLanguage> {
         Language::TypeScript => Some(&TYPESCRIPT_LANG),
         Language::Tsx => Some(&TSX_LANG),
         Language::Python => Some(&PYTHON_LANG),
+        Language::Java => Some(&JAVA_LANG),
         _ => None,
     }
 }
@@ -164,7 +180,8 @@ mod tests {
     fn test_dispatch_resolves_native_languages_and_rejects_the_rest() {
         assert!(for_language(Language::Rust).is_some());
         assert!(for_language(Language::Python).is_some());
-        assert!(for_language(Language::Java).is_none());
+        assert!(for_language(Language::Java).is_some());
+        assert!(for_language(Language::Cpp).is_none());
     }
 
     #[test]
