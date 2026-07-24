@@ -6,8 +6,8 @@
 | State | Count |
 |---|---:|
 | backlog | 21 |
-| ongoing | 6 |
-| done | 24 |
+| ongoing | 3 |
+| done | 27 |
 | **total** | **51** |
 
 ## Hierarchies
@@ -46,10 +46,10 @@
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 94% (29/31 pts · 7/8 done) · _low_ · ongoing
+### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](done/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 100% (31/31 pts · 8/8 done) · _low_ · done
 
 - [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
-- [ ] [#9gkaehf Drop the rust-code-analysis dependency](ongoing/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(ongoing)_
+- [x] [#9gkaehf Drop the rust-code-analysis dependency](done/9gkaehf-drop-the-rust-code-analysis-dependency.md)
 - [x] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](done/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md)
 - [x] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](done/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md)
 - [x] [#knau82g Generalize the native layer to be language-parameterized](done/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
@@ -64,13 +64,13 @@
 - [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](ongoing/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 96% (54/56 pts · 16/17 done) · _medium_ · ongoing
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](done/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 100% (56/56 pts · 17/17 done) · _medium_ · done
 
 - [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
 - [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](done/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md)
 - [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](done/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
-- [ ] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) _(ongoing)_
+- [x] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](done/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md)
 - [x] [#mz997tp Native function-space walk: identify + name functions to match rca](done/mz997tp-native-function-space-walk-identify-name-functions-to-match-rca.md)
 - [x] [#ne4vt2h Dual-path metric collector + rca parity harness](done/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md)
 - [x] [#pybgwkw Migrate SLOC to raw tree-sitter (Rust)](done/pybgwkw-migrate-sloc-to-raw-tree-sitter-rust.md)
