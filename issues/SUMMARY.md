@@ -7,18 +7,19 @@
 |---|---:|
 | backlog | 21 |
 | ongoing | 3 |
-| done | 27 |
-| **total** | **51** |
+| done | 28 |
+| **total** | **52** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 29% (4/14 pts · 3/7 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 47% (7/15 pts · 4/8 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
-- [ ] [#m9435x3 Distribution: cargo install & prebuilt binaries](backlog/m9435x3-distribution-cargo-install-prebuilt-binaries.md) _(backlog)_
+- [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
+- [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 
