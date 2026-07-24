@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 23 |
+| backlog | 22 |
 | ongoing | 3 |
-| done | 28 |
+| done | 29 |
 | **total** | **54** |
 
 ## Hierarchies
@@ -82,7 +82,7 @@
 
 ## Backlog
 
-- [#8bqetja Release v0.1.0](backlog/8bqetja-release-v0-1-0.md) — _high_
+_none_
 
 ## Ongoing
 
@@ -90,4 +90,4 @@ _none_
 
 ## Done
 
-_none_
+- [#8bqetja Release v0.1.0](done/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
