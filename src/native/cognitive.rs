@@ -65,7 +65,7 @@ impl Cog<'_> {
         let mut space = CogSpace::default();
         let mut i = 0;
         while i < node.child_count() {
-            self.walk(&node.child(i).expect("child within count"), ctx, &mut space);
+            self.walk(&node.child(i as u32).expect("child within count"), ctx, &mut space);
             i += 1;
         }
         let total = space.structural + space.nested_sum;
@@ -80,7 +80,7 @@ impl Cog<'_> {
         let child = cog_apply(node, ctx, space, self.rules);
         let mut i = 0;
         while i < node.child_count() {
-            let c = node.child(i).expect("child within count");
+            let c = node.child(i as u32).expect("child within count");
             let kind = c.kind();
             if self.rules.is_function(kind) {
                 space.nested_sum += self.space(&c, space_ctx(kind, child, self.rules));
@@ -175,7 +175,7 @@ fn is_labeled(node: &Node, rules: &Rules) -> bool {
 fn cog_booleans(node: &Node, space: &mut CogSpace, rules: &Rules) {
     let mut i = 0;
     while i < node.child_count() {
-        if let Some(op) = boolean_op(&node.child(i).expect("child within count"), rules) {
+        if let Some(op) = boolean_op(&node.child(i as u32).expect("child within count"), rules) {
             eval_boolean(op, space);
         }
         i += 1;

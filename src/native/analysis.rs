@@ -51,7 +51,7 @@ pub fn visit_functions(rules: &Rules, tree: &Tree, source: &[u8], f: &mut impl F
     fn recurse(walk: &mut Walk, node: Node, f: &mut impl FnMut(&str, Node)) {
         let mut i = 0;
         while i < node.named_child_count() {
-            let child = node.named_child(i).expect("named_child within count");
+            let child = node.named_child(i as u32).expect("named_child within count");
             if walk.rules.is_function(child.kind()) {
                 let name = name_for(walk.rules, &child, walk.source, &mut walk.unnamed);
                 f(&name, child);
@@ -78,7 +78,7 @@ pub fn file_functions(rules: &Rules, tree: &Tree, _source: &[u8]) -> u64 {
     fn recurse(rules: &Rules, node: Node, count: &mut u64) {
         let mut i = 0;
         while i < node.named_child_count() {
-            let child = node.named_child(i).expect("named_child within count");
+            let child = node.named_child(i as u32).expect("named_child within count");
             if rules.counts_toward_nom(child.kind()) {
                 *count += 1;
             }
@@ -140,7 +140,7 @@ fn own_params(node: &Node, rules: &Rules) -> u64 {
 fn sum_closure_params(node: &Node, rules: &Rules, total: &mut u64) {
     let mut i = 0;
     while i < node.named_child_count() {
-        let child = node.named_child(i).expect("named_child within count");
+        let child = node.named_child(i as u32).expect("named_child within count");
         let kind = child.kind();
         if rules.is_function(kind) {
             // A nested space accounts for its own closures.

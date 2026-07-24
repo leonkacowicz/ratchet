@@ -15,16 +15,17 @@ clap               = { version = "4", features = ["derive"] }
 globset            = "0.4"
 serde              = { version = "1", features = ["derive"] }
 serde_json         = { version = "1", features = ["preserve_order"] }
-tree-sitter        = "0.25"
+tree-sitter        = "0.26"
 tree-sitter-language = "0.1"
-# Grammars are ordinary registry dependencies, pinned to the exact versions
-# rust-code-analysis uses so the parse trees (and therefore the metrics) match
-# it. Only Mozilla's unpublished forks are vendored (see `vendor/`).
-tree-sitter-rust       = "=0.23.2"
-tree-sitter-cpp        = "=0.23.4"
-tree-sitter-java       = "=0.23.5"
-tree-sitter-python     = "=0.23.6"
-tree-sitter-typescript = "=0.23.2"
+# Grammars are ordinary registry dependencies. ratchet defines its own metrics, so the
+# exact grammar version isn't load-bearing — these track the latest compatible release,
+# and any resulting metric shift is caught by the golden test (`tests/fixtures/golden.json`)
+# and re-blessed deliberately. Only Mozilla's unpublished forks are vendored (see `vendor/`).
+tree-sitter-rust       = "0.23"
+tree-sitter-cpp        = "0.23"
+tree-sitter-java       = "0.23"
+tree-sitter-python     = "0.25"
+tree-sitter-typescript = "0.23"
 walkdir            = "2"
 
 [build-dependencies]

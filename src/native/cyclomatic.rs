@@ -27,7 +27,7 @@ fn cyclomatic_of(func: &Node, rules: &Rules) -> u64 {
 fn count_cyclomatic(node: &Node, rules: &Rules, total: &mut u64) {
     let mut i = 0;
     while i < node.child_count() {
-        let child = node.child(i).expect("child within count");
+        let child = node.child(i as u32).expect("child within count");
         let kind = child.kind();
         if rules.is_function(kind) || rules.decision_kinds.contains(&kind) || rules.extra_decision.is_some_and(|f| f(&child)) {
             *total += 1;

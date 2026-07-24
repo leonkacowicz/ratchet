@@ -74,7 +74,7 @@ fn text_of(node: &Node, source: &[u8]) -> Option<String> {
 fn first_child_of_kind<'a>(node: &Node<'a>, kind: &str) -> Option<Node<'a>> {
     let mut i = 0;
     while i < node.child_count() {
-        let child = node.child(i)?;
+        let child = node.child(i as u32)?;
         if child.kind() == kind {
             return Some(child);
         }
@@ -90,7 +90,7 @@ fn first_descendant_of_kind<'a>(node: &Node<'a>, kind: &str) -> Option<Node<'a>>
     }
     let mut i = 0;
     while i < node.named_child_count() {
-        let child = node.named_child(i)?;
+        let child = node.named_child(i as u32)?;
         if let Some(found) = first_descendant_of_kind(&child, kind) {
             return Some(found);
         }
