@@ -74,5 +74,8 @@ fn count_ancestors(node: &Node, check: &str, stop: &[&str]) -> u64 {
 }
 
 fn python_else(node: &Node) -> bool {
-    node.kind() == "else" && node.parent().is_some_and(|p| p.kind() == "else_clause")
+    if node.kind() != "else" {
+        return false;
+    }
+    node.parent().filter(|p| p.kind() == "else_clause").and_then(|p| p.parent()).is_some_and(|g| matches!(g.kind(), "for_statement" | "while_statement"))
 }

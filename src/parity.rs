@@ -406,7 +406,8 @@ mod tests {
         assert_eq!(cognitive(Language::TypeScript), vec![("badge".to_string(), 2)]);
     }
 
-    /// Python must agree with rca on the walk and on every metric.
+    /// Python keeps rca parity everywhere except cyclomatic, where ratchet counts
+    /// only a loop-`else` — rca's guard for that is broken and admits every `else`.
     #[test]
     fn test_python_parity_over_corpus() {
         let files = corpus("py");
@@ -414,12 +415,26 @@ mod tests {
         for (path, source) in &files {
             assert_function_walk_parity(Language::Python, source, path);
         }
-        for metric in ALL_METRICS {
+        for metric in [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionArgs, Metric::FunctionCognitive] {
             assert_metric_parity_over_corpus(metric, Language::Python, "py", 2);
         }
     }
 
-    /// Java must agree with rca on the walk and on every metric.
+    /// Golden: an `if`'s `else` is not a decision point, but a loop-`else` is.
+    #[test]
+    fn test_python_counts_only_loop_else_toward_cyclomatic() {
+        let if_else = b"def f(n):\n    if n < 0:\n        return 1\n    elif n == 0:\n        return 2\n    else:\n        return 3\n";
+        let loop_else = b"def f(xs):\n    for x in xs:\n        pass\n    else:\n        pass\n";
+        let cyclo = |src| native::analyze(Language::Python, src).expect("native").function_cyclomatic();
+        // base 1 + `if` + `elif`; the `else` does not count.
+        assert_eq!(cyclo(if_else), vec![("f".to_string(), 3)]);
+        // base 1 + `for` + the loop-`else`, which is a genuine second exit.
+        assert_eq!(cyclo(loop_else), vec![("f".to_string(), 3)]);
+    }
+
+    /// Java keeps rca parity except for arguments and cognitive, where ratchet
+    /// drops three rca defects: counting delimiters as arguments, never detecting
+    /// an `else if`, and missing the enhanced `for` in cognitive.
     #[test]
     fn test_java_parity_over_corpus() {
         let files = corpus("java");
@@ -427,9 +442,31 @@ mod tests {
         for (path, source) in &files {
             assert_function_walk_parity(Language::Java, source, path);
         }
-        for metric in ALL_METRICS {
+        for metric in [Metric::FileLines, Metric::FileFunctions, Metric::FunctionLines, Metric::FunctionCyclomatic] {
             assert_metric_parity_over_corpus(metric, Language::Java, "java", 2);
         }
+    }
+
+    /// Golden: parentheses and commas are not arguments (rca counts them, scoring
+    /// a two-argument method 5).
+    #[test]
+    fn test_java_counts_only_real_arguments() {
+        let src = b"class A { int add(int a, int b) { return a + b; } void none() {} }";
+        let nargs = native::analyze(Language::Java, src).expect("native").function_nargs();
+        assert_eq!(nargs, vec![("add".to_string(), 2), ("none".to_string(), 0)]);
+    }
+
+    /// Golden: an `else if` costs a flat `+1` and an enhanced `for` nests, as in
+    /// every other language. rca detects neither for Java.
+    #[test]
+    fn test_java_scores_else_if_and_enhanced_for_like_other_languages() {
+        let else_if = b"class A { int f(int n) { if (n < 0) { return 1; } else if (n == 0) { return 2; } return 3; } }";
+        let enhanced = b"class A { void f(int[] xs) { for (int x : xs) { if (x > 0) { return; } } } }";
+        let cog = |src| native::analyze(Language::Java, src).expect("native").function_cognitive();
+        // `if` (+1) and the `else` (+1) — not a second nested `if`.
+        assert_eq!(cog(else_if), vec![("f".to_string(), 2)]);
+        // enhanced `for` (+1) and a nested `if` (+2).
+        assert_eq!(cog(enhanced), vec![("f".to_string(), 3)]);
     }
 
     /// C and C++ share one grammar; both extensions must agree with rca.
