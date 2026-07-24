@@ -250,10 +250,11 @@ mod tests {
     }
 
     #[test]
-    fn test_native_dispatch_covers_rust_only_for_now() {
+    fn test_native_dispatch_covers_the_migrated_languages() {
         assert!(native::supports(Language::Rust));
+        assert!(native::supports(Language::Python));
         // Never native for a language whose grammar isn't vendored yet.
-        assert!(!native::supports(Language::Python));
+        assert!(!native::supports(Language::Java));
         assert_eq!(Metric::FileLines.backend(), Backend::Native);
     }
 
@@ -404,6 +405,19 @@ mod tests {
         assert_eq!(cognitive(Language::Tsx), vec![("badge".to_string(), 2)]);
         // …and identical to TypeScript and JavaScript for the same source.
         assert_eq!(cognitive(Language::TypeScript), vec![("badge".to_string(), 2)]);
+    }
+
+    /// Python must agree with rca on the walk and on every metric.
+    #[test]
+    fn test_python_parity_over_corpus() {
+        let files = corpus("py");
+        assert!(files.len() >= 2, "expected .py fixtures, found {}", files.len());
+        for (path, source) in &files {
+            assert_function_walk_parity(Language::Python, source, path);
+        }
+        for metric in ALL_METRICS {
+            assert_metric_parity_over_corpus(metric, Language::Python, "py", 2);
+        }
     }
 
     #[test]

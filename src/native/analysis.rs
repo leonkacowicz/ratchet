@@ -51,11 +51,23 @@ pub fn file_lines(tree: &Tree) -> u64 {
     (root.end_position().row - root.start_position().row) as u64
 }
 
-/// File-level function count, matching rca's `nom.total()`: the number of
-/// function spaces.
-pub fn file_functions(rules: &Rules, tree: &Tree, source: &[u8]) -> u64 {
+/// File-level function count, matching rca's `nom.total()` — functions *plus*
+/// closures. That is a wider set than the function spaces the walk emits: a
+/// Python `lambda` counts here but is not a space.
+pub fn file_functions(rules: &Rules, tree: &Tree, _source: &[u8]) -> u64 {
+    fn recurse(rules: &Rules, node: Node, count: &mut u64) {
+        let mut i = 0;
+        while i < node.named_child_count() {
+            let child = node.named_child(i).expect("named_child within count");
+            if rules.counts_toward_nom(child.kind()) {
+                *count += 1;
+            }
+            recurse(rules, child, count);
+            i += 1;
+        }
+    }
     let mut count = 0;
-    visit_functions(rules, tree, source, &mut |_name, _node| count += 1);
+    recurse(rules, tree.root_node(), &mut count);
     count
 }
 
@@ -78,15 +90,46 @@ pub fn function_nargs(rules: &Rules, tree: &Tree, source: &[u8]) -> Vec<(String,
     out
 }
 
-/// Argument count of a function node, mirroring rca's `compute_args` and
-/// `is_non_arg`: every child of the `parameters` field except the language's
-/// delimiter/attribute kinds. For Rust that means `self` counts as an argument.
+/// Argument count for a function space, mirroring rca's `max(fn_args, closure_args)`.
+///
+/// rca accumulates arguments into the *enclosing space*, so a closure that is not
+/// itself a space contributes to the function containing it. That only bites in
+/// Python, whose `lambda` is not a space: `def f(v)` containing two one-argument
+/// lambdas scores `max(1, 2) = 2`. Where closures are spaces (Rust, the JS
+/// family) the closure sum is empty and this reduces to the node's own parameters.
 pub fn nargs_of(node: &Node, rules: &Rules) -> u64 {
+    let own = own_params(node, rules);
+    let mut closures = 0;
+    sum_closure_params(node, rules, &mut closures);
+    own.max(closures)
+}
+
+/// Parameters declared directly by `node`, excluding the language's delimiters.
+fn own_params(node: &Node, rules: &Rules) -> u64 {
     let Some(params) = node.child_by_field_name("parameters") else {
         return 0;
     };
     let mut cursor = params.walk();
     params.children(&mut cursor).filter(|c| !rules.non_arg_kinds.contains(&c.kind())).count() as u64
+}
+
+/// Sum the parameters of closure nodes that belong to this space — that is,
+/// lambda-kind descendants, not descending into nested function spaces.
+fn sum_closure_params(node: &Node, rules: &Rules, total: &mut u64) {
+    let mut i = 0;
+    while i < node.named_child_count() {
+        let child = node.named_child(i).expect("named_child within count");
+        let kind = child.kind();
+        if rules.is_function(kind) {
+            // A nested space accounts for its own closures.
+        } else {
+            if rules.lambda_kinds.contains(&kind) {
+                *total += own_params(&child, rules);
+            }
+            sum_closure_params(&child, rules, total);
+        }
+        i += 1;
+    }
 }
 
 /// Ordered function entity names, matching the rca path's function list.

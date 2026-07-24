@@ -13,8 +13,8 @@ use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
 use super::rules::Rules;
-use super::rules::{JS_FAMILY, RUST};
-use super::{analysis, complexity};
+use super::rules::{JS_FAMILY, PYTHON, RUST};
+use super::{analysis, cognitive, cyclomatic};
 use crate::language::Language;
 
 extern "C" {
@@ -56,11 +56,11 @@ pub trait NativeLanguage: Sync {
     }
 
     fn function_cyclomatic(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        complexity::function_cyclomatic(self.rules(), tree, source)
+        cyclomatic::function_cyclomatic(self.rules(), tree, source)
     }
 
     fn function_cognitive(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        complexity::function_cognitive(self.rules(), tree, source)
+        cognitive::function_cognitive(self.rules(), tree, source)
     }
 }
 
@@ -126,6 +126,21 @@ impl NativeLanguage for Tsx {
 
 static TSX_LANG: Tsx = Tsx;
 
+/// Python.
+struct Python;
+
+impl NativeLanguage for Python {
+    fn grammar(&self) -> LanguageFn {
+        tree_sitter_python::LANGUAGE
+    }
+
+    fn rules(&self) -> &'static Rules {
+        &PYTHON
+    }
+}
+
+static PYTHON_LANG: Python = Python;
+
 /// Resolve a detected [`Language`] to its native implementation, or `None` when it
 /// has none yet (those languages still route through rca).
 ///
@@ -136,6 +151,7 @@ pub fn for_language(lang: Language) -> Option<&'static dyn NativeLanguage> {
         Language::JavaScript => Some(&JAVASCRIPT_LANG),
         Language::TypeScript => Some(&TYPESCRIPT_LANG),
         Language::Tsx => Some(&TSX_LANG),
+        Language::Python => Some(&PYTHON_LANG),
         _ => None,
     }
 }
@@ -145,9 +161,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_dispatch_resolves_rust_and_rejects_unvendored_languages() {
+    fn test_dispatch_resolves_native_languages_and_rejects_the_rest() {
         assert!(for_language(Language::Rust).is_some());
-        assert!(for_language(Language::Python).is_none());
+        assert!(for_language(Language::Python).is_some());
+        assert!(for_language(Language::Java).is_none());
     }
 
     #[test]

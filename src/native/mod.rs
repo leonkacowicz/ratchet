@@ -23,7 +23,8 @@
 #![allow(dead_code)]
 
 pub mod analysis;
-pub mod complexity;
+pub mod cognitive;
+pub mod cyclomatic;
 pub mod lang;
 pub mod rules;
 
@@ -99,9 +100,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_supports_rust_but_not_unvendored_languages() {
+    fn test_supports_native_languages_but_not_the_rest() {
         assert!(supports(Language::Rust));
-        assert!(!supports(Language::Python));
+        assert!(supports(Language::Python));
+        assert!(!supports(Language::Java));
     }
 
     #[test]
@@ -131,6 +133,6 @@ mod tests {
 
     #[test]
     fn test_analyze_returns_none_for_a_language_without_a_grammar() {
-        assert!(analyze(Language::Python, b"def f(): pass").is_none());
+        assert!(analyze(Language::Java, b"class A {}").is_none());
     }
 }

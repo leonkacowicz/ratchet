@@ -1,42 +1,10 @@
-//! Cyclomatic and cognitive complexity over the raw tree-sitter tree, matching
-//! rca's `cyclomatic_sum` / `cognitive_sum` (both subtree sums). The algorithms
-//! are language-agnostic; the node kinds they match come from the language's
-//! [`Rules`].
+//! Cognitive complexity over the raw tree-sitter tree, matching rca's
+//! `cognitive_sum` (a subtree sum). Language-agnostic: the nesting, flat-cost and
+//! boolean rules all come from the language's [`Rules`].
 
 use tree_sitter::{Node, Tree};
 
-use super::analysis::visit_functions;
 use super::rules::Rules;
-
-/// Per-function cyclomatic complexity as `(entity_name, value)` in walk order —
-/// matching rca's `cyclomatic_sum`.
-pub fn function_cyclomatic(rules: &Rules, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-    let mut out = Vec::new();
-    visit_functions(rules, tree, source, &mut |name, node| out.push((name.to_string(), cyclomatic_of(&node, rules))));
-    out
-}
-
-/// Cyclomatic complexity of a function node, matching rca's `cyclomatic_sum` over
-/// its subtree: a base `1` for the function, plus `1` for every nested function
-/// space (each carries its own base) and `1` for every decision point.
-fn cyclomatic_of(func: &Node, rules: &Rules) -> u64 {
-    let mut total = 1;
-    count_cyclomatic(func, rules, &mut total);
-    total
-}
-
-fn count_cyclomatic(node: &Node, rules: &Rules, total: &mut u64) {
-    let mut i = 0;
-    while i < node.child_count() {
-        let child = node.child(i).expect("child within count");
-        let kind = child.kind();
-        if rules.is_function(kind) || rules.decision_kinds.contains(&kind) {
-            *total += 1;
-        }
-        count_cyclomatic(&child, rules, total);
-        i += 1;
-    }
-}
 
 /// Boolean operator tracked for cognitive complexity's boolean-sequence rule.
 /// `Not` is the sentinel rca sets on a unary expression, distinct from `&&`/`||`
@@ -65,6 +33,9 @@ struct CogSpace {
     structural: u64,
     nested_sum: u64,
     bool_op: Option<BoolOp>,
+    /// Mirrors rca's `stats.nesting`: set by each nesting increase and reused by
+    /// kinds charged the stateful increment (Python's `except_clause`).
+    nesting_state: u64,
 }
 
 /// Per-function cognitive complexity as `(entity_name, value)` in walk order —
@@ -127,17 +98,21 @@ impl Cog<'_> {
 /// `function_expression` or `method_definition`, say — inherits unchanged.
 fn space_ctx(kind: &str, ctx: CogCtx, rules: &Rules) -> CogCtx {
     if rules.fn_kinds.contains(&kind) {
-        CogCtx {
-            nesting: 0,
-            depth: if ctx.in_fn { ctx.depth + 1 } else { ctx.depth },
-            lambda: if rules.fn_resets_lambda { 0 } else { ctx.lambda },
-            in_fn: true,
-        }
+        fn_space_ctx(ctx, rules)
     } else if rules.lambda_kinds.contains(&kind) {
         CogCtx { lambda: ctx.lambda + 1, ..ctx }
     } else {
         ctx
     }
+}
+
+/// The context inside a function space: nesting and lambda restart where the
+/// language says so, and function depth deepens once we are already in a function.
+fn fn_space_ctx(ctx: CogCtx, rules: &Rules) -> CogCtx {
+    let nesting = if rules.fn_resets_nesting { 0 } else { ctx.nesting };
+    let depth = if ctx.in_fn { ctx.depth + 1 } else { ctx.depth };
+    let lambda = if rules.fn_resets_lambda { 0 } else { ctx.lambda };
+    CogCtx { nesting, depth, lambda, in_fn: true }
 }
 
 /// Apply one node's cognitive rule to `space` and return the context its children
@@ -146,20 +121,34 @@ fn space_ctx(kind: &str, ctx: CogCtx, rules: &Rules) -> CogCtx {
 fn cog_apply(node: &Node, ctx: CogCtx, space: &mut CogSpace, rules: &Rules) -> CogCtx {
     let mut child = ctx;
     let kind = node.kind();
+    space.structural += rules.cog_extra.map_or(0, |f| f(node));
     if is_nesting_increase(node, kind, rules) {
-        space.structural += ctx.nesting + ctx.depth + ctx.lambda + 1;
+        space.nesting_state = ctx.nesting + ctx.depth + ctx.lambda;
+        space.structural += space.nesting_state + 1;
         space.bool_op = None;
         child.nesting = ctx.nesting + 1;
-    } else if rules.cog_flat_kinds.contains(&kind) || (rules.cog_labeled_kinds.contains(&kind) && is_labeled(node, rules)) {
+    } else if rules.cog_nesting_state_kinds.contains(&kind) {
+        space.structural += space.nesting_state + 1;
+    } else if is_flat_cost(node, kind, rules) {
         space.structural += 1;
     } else if rules.cog_reset_kinds.contains(&kind) {
         space.bool_op = None;
+    } else if rules.lambda_kinds.contains(&kind) {
+        // A lambda that is not itself a function space (Python's) still weights
+        // the nesting of everything inside it.
+        child.lambda = ctx.lambda + 1;
     } else if rules.cog_unary_kinds.contains(&kind) {
         space.bool_op = Some(BoolOp::Not);
     } else if rules.cog_binary_kinds.contains(&kind) {
         cog_booleans(node, space, rules);
     }
     child
+}
+
+/// Whether `node` costs a flat `1`: one of the language's flat kinds (an `else`
+/// token, an `elif`/`finally` clause) or a labeled `break`/`continue`.
+fn is_flat_cost(node: &Node, kind: &str, rules: &Rules) -> bool {
+    rules.cog_flat_kinds.contains(&kind) || (rules.cog_labeled_kinds.contains(&kind) && is_labeled(node, rules))
 }
 
 /// Whether `node` adds a nesting-weighted cost: one of the language's control
@@ -233,15 +222,6 @@ mod tests {
     fn on_rust<T>(src: &[u8], f: impl Fn(&Rules, &Tree, &[u8]) -> T) -> T {
         let a = analyze(Language::Rust, src).expect("Rust is native");
         f(&RUST, a.tree(), src)
-    }
-
-    #[test]
-    fn test_cyclomatic_sums_subtree_including_nested_closures() {
-        let src = b"fn simple() {}\nfn one_if(x: bool) { if x {} }\nfn two(a: bool, b: bool) { if a && b {} }\nfn nested() { let c = || { if true {} }; if false {} }\n";
-        assert_eq!(
-            on_rust(src, function_cyclomatic),
-            vec![("simple".to_string(), 1), ("one_if".to_string(), 2), ("two".to_string(), 3), ("nested".to_string(), 4), ("<anonymous>".to_string(), 2)]
-        );
     }
 
     #[test]
