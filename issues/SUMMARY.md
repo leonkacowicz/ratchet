@@ -5,14 +5,14 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
+| backlog | 21 |
 | ongoing | 3 |
-| done | 29 |
+| done | 30 |
 | **total** | **54** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 35% (7/20 pts · 4/10 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 45% (9/20 pts · 5/10 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
@@ -22,7 +22,7 @@
 - [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
-- [ ] [#uuf98vh Standalone install script for prebuilt binaries](backlog/uuf98vh-standalone-install-script-for-prebuilt-binaries.md) _(backlog)_
+- [x] [#uuf98vh Standalone install script for prebuilt binaries](done/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
 - [ ] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](backlog/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md) _(backlog)_
 
 ### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
