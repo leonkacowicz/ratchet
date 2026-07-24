@@ -1,0 +1,85 @@
+name: "Install ratchet"
+description: "Install the ratchet code-quality gate (checksum-verified prebuilt binary) and put it on PATH."
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  version:
+    description: 'Release tag to install (e.g. "v0.1.0"), or "latest".'
+    required: false
+    default: "latest"
+
+outputs:
+  version:
+    description: "The ratchet version that was installed."
+    value: ${{ steps.unix.outputs.version || steps.windows.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    # Linux & macOS: reuse the repo's install.sh (platform detect, checksum-verified
+    # download), then expose the install dir to later steps. Fall back to building from
+    # source if there's no matching prebuilt asset (e.g. linux-aarch64) or the download
+    # fails.
+    - name: Install ratchet (Linux/macOS)
+      id: unix
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        RATCHET_VERSION: ${{ inputs.version }}
+      run: |
+        set -eu
+        dir="$RUNNER_TEMP/ratchet-bin"
+        mkdir -p "$dir"
+        if bash "$GITHUB_ACTION_PATH/install.sh" --version "$RATCHET_VERSION" --bin-dir "$dir"; then
+          bin="$dir/ratchet"
+        else
+          echo "::warning::no prebuilt ratchet for this platform; building from source with cargo"
+          tagargs=()
+          [ "$RATCHET_VERSION" != "latest" ] && tagargs=(--tag "$RATCHET_VERSION")
+          cargo install --git "https://github.com/$GITHUB_ACTION_REPOSITORY" --locked "${tagargs[@]}" --root "$dir/cargo"
+          bin="$dir/cargo/bin/ratchet"
+          echo "$dir/cargo/bin" >>"$GITHUB_PATH"
+        fi
+        echo "$dir" >>"$GITHUB_PATH"
+        echo "version=$("$bin" --version | awk '{print $2}')" >>"$GITHUB_OUTPUT"
+
+    # Windows: install.sh is POSIX-only and the asset is a .zip, so do it natively.
+    - name: Install ratchet (Windows)
+      id: windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        RATCHET_VERSION: ${{ inputs.version }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $repo = $env:GITHUB_ACTION_REPOSITORY
+        $ver = $env:RATCHET_VERSION
+        $dir = Join-Path $env:RUNNER_TEMP 'ratchet-bin'
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+
+        if ($ver -eq 'latest') {
+          $ver = (Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest").tag_name
+        }
+
+        if ($env:RUNNER_ARCH -eq 'X64') {
+          $asset = "ratchet-$ver-x86_64-pc-windows-msvc.zip"
+          $base = "https://github.com/$repo/releases/download/$ver"
+          Invoke-WebRequest "$base/$asset" -OutFile "$dir\$asset"
+          Invoke-WebRequest "$base/$asset.sha256" -OutFile "$dir\$asset.sha256"
+          $expected = ((Get-Content "$dir\$asset.sha256") -split '\s+')[0].ToLower()
+          $actual = (Get-FileHash "$dir\$asset" -Algorithm SHA256).Hash.ToLower()
+          if ($expected -ne $actual) { throw "checksum verification FAILED for $asset" }
+          Expand-Archive "$dir\$asset" -DestinationPath $dir -Force
+          $bin = "$dir\ratchet.exe"
+        } else {
+          Write-Host "::warning::no prebuilt ratchet for Windows/$($env:RUNNER_ARCH); building from source with cargo"
+          $tag = if ($ver -eq 'latest') { @() } else { @('--tag', $ver) }
+          cargo install --git "https://github.com/$repo" --locked @tag --root "$dir\cargo"
+          $bin = "$dir\cargo\bin\ratchet.exe"
+          Add-Content $env:GITHUB_PATH "$dir\cargo\bin"
+        }
+
+        Add-Content $env:GITHUB_PATH $dir
+        Add-Content $env:GITHUB_OUTPUT "version=$((& $bin --version).Split(' ')[1])"

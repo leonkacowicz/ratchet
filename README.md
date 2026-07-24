@@ -183,9 +183,40 @@ built binary, not a third-party code-quality service:
    `quality-report.json` is stale, and on pull requests `ratchet compare` fails it if any
    metric regresses against the base branch.
 
-It runs on GitHub-hosted runners on every push to `main` and every pull request. To wire
-the same gate into another project, [install ratchet](#installation) — a prebuilt release
-binary is the quickest route in CI — and drop the two `ratchet` steps into your pipeline.
+It runs on GitHub-hosted runners on every push to `main` and every pull request.
+
+### Adding the gate to your own repo
+
+This repo ships a composite action that installs ratchet (checksum-verified prebuilt
+binary, on Linux, macOS, and Windows runners; it falls back to building from source when no
+prebuilt binary matches). Reference it with `uses:` and then run the gate yourself:
+
+```yaml
+name: quality
+on: [push, pull_request]
+jobs:
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # so `compare` can read the baseline report from the base ref
+      - uses: leonkacowicz/ratchet@v0.1.0 # installs `ratchet` onto PATH (or @main for latest)
+      - run: ratchet check --root . # committed report must match the code
+      - if: github.event_name == 'pull_request' # no regression vs the base branch
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          ratchet compare --root . --base "origin/${{ github.base_ref }}"
+```
+
+**One-time bootstrap** in the repo you're adding the gate to: run `ratchet generate --root .`
+and **commit the resulting `quality-report.json`** — that snapshot is the baseline. Your
+existing violations are grandfathered (the ratchet only forbids making them worse), so you
+don't have to pay down debt to adopt it. From then on the two steps above keep the report
+fresh and block regressions.
+
+Prefer not to use the action? [Install ratchet](#installation) however you like (the
+`install.sh` one-liner or `cargo install`) and run the same `ratchet` steps.
 
 ## Status
 
