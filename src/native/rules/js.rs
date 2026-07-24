@@ -57,6 +57,7 @@ const JS_BASE: Rules = Rules {
     cog_extra: None,
     extra_decision: None,
     name_of: js_family_function_name,
+    params_via_declarator: false,
 };
 
 /// JavaScript/JSX, TypeScript and TSX all share this one rule set.
@@ -78,9 +79,9 @@ pub static JS_FAMILY: Rules = JS_BASE;
 
 /// rca's JS-family naming: an anonymous function takes its name from an enclosing
 /// `pair` (`foo: function () {}`) or `variable_declarator` (`var f = () => {}`).
-fn js_family_function_name(node: &Node, source: &[u8]) -> String {
+fn js_family_function_name(node: &Node, source: &[u8]) -> Option<String> {
     if let Some(name) = field_text(node, "name", source) {
-        return name;
+        return Some(name);
     }
     let borrowed = node.parent().and_then(|parent| {
         let field = match parent.kind() {
@@ -90,5 +91,5 @@ fn js_family_function_name(node: &Node, source: &[u8]) -> String {
         };
         field_text(&parent, field, source)
     });
-    borrowed.unwrap_or_else(|| ANONYMOUS.to_string())
+    Some(borrowed.unwrap_or_else(|| ANONYMOUS.to_string()))
 }

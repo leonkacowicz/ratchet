@@ -33,6 +33,8 @@ use tree_sitter::{Parser, Tree};
 use crate::language::Language;
 use lang::NativeLanguage;
 
+use rules::Rules;
+
 /// Whether ratchet can measure `lang` natively (it has a vendored grammar and a
 /// rule set). Everything else still routes through rca.
 pub fn supports(lang: Language) -> bool {
@@ -44,7 +46,7 @@ pub fn supports(lang: Language) -> bool {
 pub fn analyze(lang: Language, source: &[u8]) -> Option<Analysis<'_>> {
     let implementation = lang::for_language(lang)?;
     let mut parser = Parser::new();
-    parser.set_language(&implementation.grammar().into()).ok()?;
+    parser.set_language(&implementation.grammar.into()).ok()?;
     let tree = parser.parse(source, None)?;
     Some(Analysis { implementation, tree, source })
 }
@@ -53,43 +55,48 @@ pub fn analyze(lang: Language, source: &[u8]) -> Option<Analysis<'_>> {
 /// to that implementation's glue, which in turn calls the shared building blocks —
 /// so the tree is parsed once and no metric code branches on the language.
 pub struct Analysis<'a> {
-    implementation: &'static dyn NativeLanguage,
+    implementation: &'static NativeLanguage,
     tree: Tree,
     source: &'a [u8],
 }
 
 impl Analysis<'_> {
+    /// The node-kind rules for this file's language.
+    fn rules(&self) -> &'static Rules {
+        self.implementation.rules
+    }
+
     /// The parsed syntax tree (exposed for tests and debugging).
     pub fn tree(&self) -> &Tree {
         &self.tree
     }
 
     pub fn file_lines(&self) -> u64 {
-        self.implementation.file_lines(&self.tree, self.source)
+        analysis::file_lines(&self.tree)
     }
 
     pub fn file_functions(&self) -> u64 {
-        self.implementation.file_functions(&self.tree, self.source)
+        analysis::file_functions(self.rules(), &self.tree, self.source)
     }
 
     pub fn function_lines(&self) -> Vec<(String, u64)> {
-        self.implementation.function_lines(&self.tree, self.source)
+        analysis::function_lines(self.rules(), &self.tree, self.source)
     }
 
     pub fn function_nargs(&self) -> Vec<(String, u64)> {
-        self.implementation.function_nargs(&self.tree, self.source)
+        analysis::function_nargs(self.rules(), &self.tree, self.source)
     }
 
     pub fn function_cyclomatic(&self) -> Vec<(String, u64)> {
-        self.implementation.function_cyclomatic(&self.tree, self.source)
+        cyclomatic::function_cyclomatic(self.rules(), &self.tree, self.source)
     }
 
     pub fn function_cognitive(&self) -> Vec<(String, u64)> {
-        self.implementation.function_cognitive(&self.tree, self.source)
+        cognitive::function_cognitive(self.rules(), &self.tree, self.source)
     }
 
     pub fn function_entities(&self) -> Vec<String> {
-        self.implementation.function_entities(&self.tree, self.source)
+        analysis::function_entities(self.rules(), &self.tree, self.source)
     }
 }
 
@@ -100,11 +107,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_supports_native_languages_but_not_the_rest() {
-        assert!(supports(Language::Rust));
-        assert!(supports(Language::Python));
-        assert!(supports(Language::Java));
-        assert!(!supports(Language::Cpp));
+    fn test_every_language_is_natively_supported() {
+        for lang in lang::ALL_LANGUAGES {
+            assert!(supports(lang), "{lang:?} is not natively supported");
+        }
     }
 
     #[test]
@@ -133,7 +139,20 @@ mod tests {
     }
 
     #[test]
-    fn test_analyze_returns_none_for_a_language_without_a_grammar() {
-        assert!(analyze(Language::Cpp, b"int main() { return 0; }").is_none());
+    fn test_analyze_succeeds_for_every_language() {
+        // One trivial source per language, each of which must parse natively.
+        let samples: [(Language, &[u8]); 7] = [
+            (Language::Rust, b"fn f() {}"),
+            (Language::Cpp, b"int f() { return 0; }"),
+            (Language::Python, b"def f():\n    pass\n"),
+            (Language::Java, b"class A { void f() {} }"),
+            (Language::JavaScript, b"function f() {}"),
+            (Language::TypeScript, b"function f(): void {}"),
+            (Language::Tsx, b"const f = () => <b>x</b>;"),
+        ];
+        for (lang, src) in samples {
+            let analysis = analyze(lang, src).unwrap_or_else(|| panic!("{lang:?} should parse natively"));
+            assert_eq!(analysis.file_functions(), 1, "{lang:?}");
+        }
     }
 }

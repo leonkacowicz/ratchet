@@ -498,6 +498,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tree-sitter",
+ "tree-sitter-cpp",
  "tree-sitter-java",
  "tree-sitter-language",
  "tree-sitter-python",

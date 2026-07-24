@@ -87,9 +87,16 @@ pub struct Rules {
     pub extra_decision: Option<fn(&Node) -> bool>,
     /// How a function's entity name is derived. Behaviour-as-data: the shared walk
     /// just calls this, so naming never branches on a language. Most languages use
-    /// [`default_function_name`]; the JS family looks through a `pair` /
-    /// `variable_declarator` parent, and C/C++ will read its `declarator`.
-    pub name_of: fn(&Node, &[u8]) -> String,
+    /// `default_function_name`; the JS family looks through a `pair` /
+    /// `variable_declarator` parent, and C/C++ reads its `declarator`.
+    ///
+    /// `None` means the language could not name this function — the walk then
+    /// synthesizes `{closure_N}`, matching rca's `function_entity_name`.
+    pub name_of: fn(&Node, &[u8]) -> Option<String>,
+    /// Whether a function's `parameters` hang off a `declarator` child rather than
+    /// the function node itself. True for C/C++, where rca counts arguments on the
+    /// `function_declarator`.
+    pub params_via_declarator: bool,
 }
 
 impl Rules {
@@ -118,11 +125,13 @@ impl Rules {
 /// that same parent against `typs` (`ElseClause`), which always holds. The guard
 /// therefore admits every `else`. A conditional expression's `else` still does not
 /// count: its parent is the expression, not an `else_clause`.
+mod cpp;
 mod java;
 mod js;
 mod python;
 mod rust;
 
+pub use cpp::CPP;
 pub use java::JAVA;
 pub use js::JS_FAMILY;
 pub use python::PYTHON;

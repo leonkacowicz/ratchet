@@ -28,4 +28,5 @@ pub static RUST: Rules = Rules {
     cog_extra: None,
     extra_decision: None,
     name_of: default_function_name,
+    params_via_declarator: false,
 };

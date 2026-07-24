@@ -61,7 +61,7 @@ impl Cog<'_> {
     /// walk) and return its cognitive_sum (own `structural` + nested spaces).
     fn space(&mut self, node: &Node, ctx: CogCtx) -> u64 {
         let idx = self.out.len();
-        self.out.push(((self.rules.name_of)(node, self.source), 0));
+        self.out.push(((self.rules.name_of)(node, self.source).unwrap_or_default(), 0));
         let mut space = CogSpace::default();
         let mut i = 0;
         while i < node.child_count() {

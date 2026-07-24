@@ -21,27 +21,47 @@ pub fn field_text(node: &Node, field: &str, source: &[u8]) -> Option<String> {
 /// rca's *default* `get_func_space_name`: the node's `name` field text, or
 /// `"<anonymous>"`. Languages whose naming differs supply their own function via
 /// [`Rules::name_of`] — rca does **not** qualify methods by their type.
-pub fn default_function_name(node: &Node, source: &[u8]) -> String {
-    field_text(node, "name", source).unwrap_or_else(|| ANONYMOUS.to_string())
+pub fn default_function_name(node: &Node, source: &[u8]) -> Option<String> {
+    Some(field_text(node, "name", source).unwrap_or_else(|| ANONYMOUS.to_string()))
 }
 
 /// Visit every function space in the tree in pre-order, invoking `f(name, node)`.
 /// Order and naming mirror rca's `visit_function_spaces` + `function_entity_name`,
 /// so entities line up one-to-one with the rca path.
 pub fn visit_functions(rules: &Rules, tree: &Tree, source: &[u8], f: &mut impl FnMut(&str, Node)) {
-    fn recurse(rules: &Rules, node: Node, source: &[u8], f: &mut impl FnMut(&str, Node)) {
+    /// Matches rca's `function_entity_name`: use the language's name when it has
+    /// one, otherwise number the unnamed functions in walk order.
+    fn name_for(rules: &Rules, node: &Node, source: &[u8], unnamed: &mut u32) -> String {
+        match (rules.name_of)(node, source) {
+            Some(name) if !name.is_empty() => name,
+            _ => {
+                let id = *unnamed;
+                *unnamed += 1;
+                format!("{{closure_{id}}}")
+            },
+        }
+    }
+    /// Walk state: the language's rules, the source, and the running count of
+    /// functions the language could not name.
+    struct Walk<'a> {
+        rules: &'a Rules,
+        source: &'a [u8],
+        unnamed: u32,
+    }
+    fn recurse(walk: &mut Walk, node: Node, f: &mut impl FnMut(&str, Node)) {
         let mut i = 0;
         while i < node.named_child_count() {
             let child = node.named_child(i).expect("named_child within count");
-            if rules.is_function(child.kind()) {
-                let name = (rules.name_of)(&child, source);
+            if walk.rules.is_function(child.kind()) {
+                let name = name_for(walk.rules, &child, walk.source, &mut walk.unnamed);
                 f(&name, child);
             }
-            recurse(rules, child, source, f);
+            recurse(walk, child, f);
             i += 1;
         }
     }
-    recurse(rules, tree.root_node(), source, f);
+    let mut walk = Walk { rules, source, unnamed: 0 };
+    recurse(&mut walk, tree.root_node(), f);
 }
 
 /// File-level SLOC, matching rca's `loc.sloc()` on the unit: the root node's
@@ -104,9 +124,11 @@ pub fn nargs_of(node: &Node, rules: &Rules) -> u64 {
     own.max(closures)
 }
 
-/// Parameters declared directly by `node`, excluding the language's delimiters.
+/// Parameters declared by `node`, excluding the language's delimiters. In C/C++
+/// they hang off the node's `declarator` rather than the node itself.
 fn own_params(node: &Node, rules: &Rules) -> u64 {
-    let Some(params) = node.child_by_field_name("parameters") else {
+    let holder = if rules.params_via_declarator { node.child_by_field_name("declarator") } else { Some(*node) };
+    let Some(params) = holder.and_then(|h| h.child_by_field_name("parameters")) else {
         return 0;
     };
     let mut cursor = params.walk();

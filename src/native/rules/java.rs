@@ -47,4 +47,5 @@ pub static JAVA: Rules = Rules {
     fn_resets_lambda: false,
     fn_resets_nesting: false,
     name_of: default_function_name,
+    params_via_declarator: false,
 };

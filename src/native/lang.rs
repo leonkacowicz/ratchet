@@ -1,20 +1,21 @@
-//! Language-specific support: the grammar, the rule data, and the glue that
-//! assembles the language-agnostic building blocks into metric values.
+//! Language-specific support: which grammar parses a language and which rule set
+//! describes it.
 //!
 //! This is the **only** module that knows about [`Language`]. Everything below it
-//! ([`analysis`](super::analysis), [`complexity`](super::complexity)) is pure
-//! computation over `(rules, tree, source)` and never branches on a language.
+//! ([`analysis`](super::analysis), [`cognitive`](super::cognitive),
+//! [`cyclomatic`](super::cyclomatic)) is pure computation over
+//! `(rules, tree, source)` and never branches on a language.
 //!
-//! The default glue suits any language whose metrics follow rca's generic shape;
-//! a language that differs overrides just the method it needs (C/C++ will override
-//! naming and argument counting, whose values hang off a `declarator`).
+//! Every per-language difference so far has been expressible as data in
+//! [`Rules`] — including the two that looked like they would need code, C/C++'s
+//! `declarator` naming and the JS family's `variable_declarator` fallback, which
+//! are function pointers on the rule set. So a language is exactly a grammar plus
+//! a rule set, and this module is a table. Should one ever need genuinely custom
+//! glue, add a function-pointer field to `Rules` the way `name_of` did.
 
-use tree_sitter::Tree;
 use tree_sitter_language::LanguageFn;
 
-use super::rules::Rules;
-use super::rules::{JAVA, JS_FAMILY, PYTHON, RUST};
-use super::{analysis, cognitive, cyclomatic};
+use super::rules::{Rules, CPP, JAVA, JS_FAMILY, PYTHON, RUST};
 use crate::language::Language;
 
 extern "C" {
@@ -23,170 +24,62 @@ extern "C" {
     fn tree_sitter_mozjs() -> *const ();
 }
 
-/// One language's native implementation.
-///
-/// Required: which grammar parses it and which [`Rules`] describe its node kinds.
-/// The metric methods are glue with sensible defaults — override only where a
-/// language genuinely differs.
-pub trait NativeLanguage: Sync {
-    /// The vendored tree-sitter grammar for this language.
-    fn grammar(&self) -> LanguageFn;
-
-    /// The node-kind rule set driving the shared algorithms.
-    fn rules(&self) -> &'static Rules;
-
-    fn file_lines(&self, tree: &Tree, _source: &[u8]) -> u64 {
-        analysis::file_lines(tree)
-    }
-
-    fn file_functions(&self, tree: &Tree, source: &[u8]) -> u64 {
-        analysis::file_functions(self.rules(), tree, source)
-    }
-
-    fn function_lines(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        analysis::function_lines(self.rules(), tree, source)
-    }
-
-    fn function_nargs(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        analysis::function_nargs(self.rules(), tree, source)
-    }
-
-    fn function_entities(&self, tree: &Tree, source: &[u8]) -> Vec<String> {
-        analysis::function_entities(self.rules(), tree, source)
-    }
-
-    fn function_cyclomatic(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        cyclomatic::function_cyclomatic(self.rules(), tree, source)
-    }
-
-    fn function_cognitive(&self, tree: &Tree, source: &[u8]) -> Vec<(String, u64)> {
-        cognitive::function_cognitive(self.rules(), tree, source)
-    }
+/// One language's native implementation: the grammar that parses it and the node
+/// kinds that drive its metrics.
+pub struct NativeLanguage {
+    pub grammar: LanguageFn,
+    pub rules: &'static Rules,
 }
 
-/// Rust — the reference implementation, verified byte-for-byte against rca. Every
-/// metric uses the default glue.
-struct Rust;
+static RUST_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_rust::LANGUAGE, rules: &RUST };
+static CPP_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_cpp::LANGUAGE, rules: &CPP };
+static PYTHON_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_python::LANGUAGE, rules: &PYTHON };
+static JAVA_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_java::LANGUAGE, rules: &JAVA };
+static TYPESCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TYPESCRIPT, rules: &JS_FAMILY };
+static TSX_LANG: NativeLanguage = NativeLanguage { grammar: tree_sitter_typescript::LANGUAGE_TSX, rules: &JS_FAMILY };
+/// JavaScript/JSX uses the vendored mozjs fork, the grammar rca routes `.js`,
+/// `.mjs`, `.cjs` and `.jsx` to.
+static JAVASCRIPT_LANG: NativeLanguage = NativeLanguage { grammar: unsafe { LanguageFn::from_raw(tree_sitter_mozjs) }, rules: &JS_FAMILY };
 
-impl NativeLanguage for Rust {
-    fn grammar(&self) -> LanguageFn {
-        tree_sitter_rust::LANGUAGE
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &RUST
-    }
-}
-
-static RUST_LANG: Rust = Rust;
-
-/// JavaScript (including JSX), parsed with the vendored mozjs grammar — the fork
-/// rca routes `.js`/`.mjs`/`.cjs`/`.jsx` to, and the one grammar with no crate.
-struct JavaScript;
-
-impl NativeLanguage for JavaScript {
-    fn grammar(&self) -> LanguageFn {
-        unsafe { LanguageFn::from_raw(tree_sitter_mozjs) }
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &JS_FAMILY
-    }
-}
-
-static JAVASCRIPT_LANG: JavaScript = JavaScript;
-
-/// TypeScript — the JS-family rules with the TypeScript grammar.
-struct TypeScript;
-
-impl NativeLanguage for TypeScript {
-    fn grammar(&self) -> LanguageFn {
-        tree_sitter_typescript::LANGUAGE_TYPESCRIPT
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &JS_FAMILY
-    }
-}
-
-static TYPESCRIPT_LANG: TypeScript = TypeScript;
-
-/// TSX — the JS-family rules with the TSX grammar (TypeScript plus JSX).
-struct Tsx;
-
-impl NativeLanguage for Tsx {
-    fn grammar(&self) -> LanguageFn {
-        tree_sitter_typescript::LANGUAGE_TSX
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &JS_FAMILY
-    }
-}
-
-static TSX_LANG: Tsx = Tsx;
-
-/// Python.
-struct Python;
-
-impl NativeLanguage for Python {
-    fn grammar(&self) -> LanguageFn {
-        tree_sitter_python::LANGUAGE
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &PYTHON
-    }
-}
-
-static PYTHON_LANG: Python = Python;
-
-/// Java.
-struct Java;
-
-impl NativeLanguage for Java {
-    fn grammar(&self) -> LanguageFn {
-        tree_sitter_java::LANGUAGE
-    }
-
-    fn rules(&self) -> &'static Rules {
-        &JAVA
-    }
-}
-
-static JAVA_LANG: Java = Java;
-
-/// Resolve a detected [`Language`] to its native implementation, or `None` when it
-/// has none yet (those languages still route through rca).
+/// Resolve a detected [`Language`] to its native implementation.
 ///
 /// **This is the single dispatch point on `Language` in the native path.**
-pub fn for_language(lang: Language) -> Option<&'static dyn NativeLanguage> {
-    match lang {
-        Language::Rust => Some(&RUST_LANG),
-        Language::JavaScript => Some(&JAVASCRIPT_LANG),
-        Language::TypeScript => Some(&TYPESCRIPT_LANG),
-        Language::Tsx => Some(&TSX_LANG),
-        Language::Python => Some(&PYTHON_LANG),
-        Language::Java => Some(&JAVA_LANG),
-        _ => None,
-    }
+///
+/// Every language ratchet supports now has one, so the match is exhaustive and
+/// this never returns `None` — the `Option` is kept because `structural.rs` still
+/// treats a missing implementation as "fall back to rca", the seam that
+/// disappears when rca is dropped.
+pub fn for_language(lang: Language) -> Option<&'static NativeLanguage> {
+    Some(match lang {
+        Language::Rust => &RUST_LANG,
+        Language::Cpp => &CPP_LANG,
+        Language::Python => &PYTHON_LANG,
+        Language::Java => &JAVA_LANG,
+        Language::JavaScript => &JAVASCRIPT_LANG,
+        Language::TypeScript => &TYPESCRIPT_LANG,
+        Language::Tsx => &TSX_LANG,
+    })
 }
+
+/// Every language ratchet measures — all of them native.
+#[cfg(test)]
+pub(crate) const ALL_LANGUAGES: [Language; 7] =
+    [Language::Rust, Language::Cpp, Language::Python, Language::Java, Language::JavaScript, Language::TypeScript, Language::Tsx];
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_dispatch_resolves_native_languages_and_rejects_the_rest() {
-        assert!(for_language(Language::Rust).is_some());
-        assert!(for_language(Language::Python).is_some());
-        assert!(for_language(Language::Java).is_some());
-        assert!(for_language(Language::Cpp).is_none());
+    fn test_every_supported_language_resolves_to_a_native_implementation() {
+        for lang in ALL_LANGUAGES {
+            assert!(for_language(lang).is_some(), "{lang:?} has no native implementation");
+        }
     }
 
     #[test]
-    fn test_rust_impl_exposes_its_rule_set() {
+    fn test_rust_resolves_to_its_own_rule_set() {
         let rust = for_language(Language::Rust).expect("Rust is native");
-        assert!(rust.rules().is_function("function_item"));
+        assert!(rust.rules.is_function("function_item"));
     }
 }

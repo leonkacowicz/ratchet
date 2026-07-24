@@ -37,6 +37,7 @@ pub static PYTHON: Rules = Rules {
     cog_extra: Some(python_boolean_lambda_depth),
     extra_decision: Some(python_else),
     name_of: default_function_name,
+    params_via_declarator: false,
 };
 
 /// rca charges a Python `boolean_operator` an extra point per enclosing `lambda`.

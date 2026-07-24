@@ -250,13 +250,11 @@ mod tests {
     }
 
     #[test]
-    fn test_native_dispatch_covers_the_migrated_languages() {
-        assert!(native::supports(Language::Rust));
-        assert!(native::supports(Language::Python));
-        assert!(native::supports(Language::Java));
-        // Never native for a language whose grammar isn't vendored yet.
-        assert!(!native::supports(Language::Cpp));
-        assert_eq!(Metric::FileLines.backend(), Backend::Native);
+    fn test_every_metric_and_language_now_resolves_to_the_native_path() {
+        for metric in ALL_METRICS {
+            assert_eq!(metric.backend(), Backend::Native, "{metric:?} still routes through rca");
+        }
+        assert!(native::supports(Language::Cpp));
     }
 
     #[test]
@@ -431,6 +429,21 @@ mod tests {
         }
         for metric in ALL_METRICS {
             assert_metric_parity_over_corpus(metric, Language::Java, "java", 2);
+        }
+    }
+
+    /// C and C++ share one grammar; both extensions must agree with rca.
+    #[test]
+    fn test_cpp_parity_over_corpus() {
+        for ext in ["c", "cpp"] {
+            let files = corpus(ext);
+            assert!(!files.is_empty(), "expected .{ext} fixtures");
+            for (path, source) in &files {
+                assert_function_walk_parity(Language::Cpp, source, path);
+            }
+            for metric in ALL_METRICS {
+                assert_metric_parity_over_corpus(metric, Language::Cpp, ext, 1);
+            }
         }
     }
 
