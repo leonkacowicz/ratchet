@@ -46,6 +46,44 @@ These two rules together give useful properties for free:
 - **Deletion frees budget.** Removing a violation makes room for a new one of equal or
   smaller size in the same category.
 
+## Installation
+
+### From source with `cargo install`
+
+Requires a Rust toolchain (the build compiles a few tree-sitter grammars from C, so a C
+compiler must be on `PATH`). `--locked` builds against the committed `Cargo.lock` for a
+reproducible install:
+
+```sh
+cargo install --git https://github.com/leonkacowicz/ratchet --locked
+```
+
+This drops a `ratchet` binary in `~/.cargo/bin`. Run `ratchet --version` to confirm.
+
+### Prebuilt binaries
+
+Each tagged release attaches a prebuilt binary per platform to its
+[GitHub Release](https://github.com/leonkacowicz/ratchet/releases), so CI (and anyone
+without a Rust toolchain) can skip compiling:
+
+| Platform | Asset |
+|---|---|
+| Linux x86-64 | `ratchet-<tag>-x86_64-unknown-linux-gnu.tar.gz` |
+| macOS Apple silicon | `ratchet-<tag>-aarch64-apple-darwin.tar.gz` |
+| macOS Intel | `ratchet-<tag>-x86_64-apple-darwin.tar.gz` |
+| Windows x86-64 | `ratchet-<tag>-x86_64-pc-windows-msvc.zip` |
+
+Each archive ships a matching `.sha256`; verify with `shasum -c <asset>.sha256`
+(`sha256sum -c` on Linux). Download, extract, and put `ratchet` on your `PATH`. For
+example, on Linux:
+
+```sh
+tag=v0.1.0
+curl -fsSL -O https://github.com/leonkacowicz/ratchet/releases/download/$tag/ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
+tar xzf ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
+sudo install ratchet /usr/local/bin/
+```
+
 ## Usage
 
 ```sh
@@ -132,8 +170,8 @@ built binary, not a third-party code-quality service:
    metric regresses against the base branch.
 
 It runs on GitHub-hosted runners on every push to `main` and every pull request. To wire
-the same gate into another project, drop the two `ratchet` steps into your pipeline after
-building the binary (or `cargo install --git https://github.com/leonkacowicz/ratchet`).
+the same gate into another project, [install ratchet](#installation) — a prebuilt release
+binary is the quickest route in CI — and drop the two `ratchet` steps into your pipeline.
 
 ## Status
 

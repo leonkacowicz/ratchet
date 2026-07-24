@@ -1,0 +1,96 @@
+name: Release
+
+# Cut a release: bump the version in Cargo.toml, commit, then push a `v*` tag
+# (e.g. `git tag v0.1.0 && git push origin v0.1.0`). This builds a binary per
+# platform on a native runner — so the `cc`-compiled tree-sitter grammar never
+# has to cross-compile — packages each with a SHA-256 checksum, and attaches
+# them all to a GitHub Release for the tag.
+
+on:
+  push:
+    tags: ["v*"]
+
+# Needed to create the Release and upload assets.
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
+          - { target: x86_64-apple-darwin, os: macos-13 } # Intel host
+          - { target: aarch64-apple-darwin, os: macos-14 } # Apple-silicon host
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      # Package into an archive plus a `<archive>.sha256` next to it. Unix gets a
+      # tar.gz; Windows a zip. Both checksum lines use the `<hash>  <name>` shape
+      # that `shasum -c` / `sha256sum -c` expect.
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          name="ratchet-${{ github.ref_name }}-${{ matrix.target }}"
+          mkdir -p dist
+          cp "target/${{ matrix.target }}/release/ratchet" ratchet
+          tar czf "dist/$name.tar.gz" ratchet
+          rm ratchet
+          ( cd dist && shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256" )
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $name = "ratchet-${{ github.ref_name }}-${{ matrix.target }}"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/ratchet.exe" ratchet.exe
+          Compress-Archive -Path ratchet.exe -DestinationPath "dist/$name.zip"
+          Remove-Item ratchet.exe
+          $hash = (Get-FileHash "dist/$name.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name.zip" | Out-File -Encoding ascii -NoNewline "dist/$name.zip.sha256"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ratchet-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Collect every platform's archive + checksum into one directory.
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

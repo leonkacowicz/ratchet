@@ -20,7 +20,7 @@ use crate::sources::Sources;
 const REPORT_FILE: &str = "quality-report.json";
 
 #[derive(Parser)]
-#[command(name = "ratchet", about = "Snapshot structural code metrics and block quality regressions in CI.")]
+#[command(name = "ratchet", version, about = "Snapshot structural code metrics and block quality regressions in CI.")]
 struct Cli {
     /// Project root to analyze: the directory containing the source tree and
     /// (for `check`/`compare`) the committed `quality-report.json`.
