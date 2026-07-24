@@ -7,23 +7,24 @@
 |---|---:|
 | backlog | 21 |
 | ongoing | 3 |
-| done | 30 |
-| **total** | **54** |
+| done | 31 |
+| **total** | **55** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 45% (9/20 pts · 5/10 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 55% (12/22 pts · 6/11 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
 - [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
+- [ ] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](backlog/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md) _(backlog)_
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
 - [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 - [x] [#uuf98vh Standalone install script for prebuilt binaries](done/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
-- [ ] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](backlog/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md) _(backlog)_
+- [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](done/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
 
 ### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
 
