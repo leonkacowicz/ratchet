@@ -1,0 +1,594 @@
+{
+  "example.c": {
+    "file_lines": 16,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "classify": 8
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 2
+    }
+  },
+  "example.cpp": {
+    "file_lines": 19,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "sum": 7
+    },
+    "function_args": {
+      "add": 1,
+      "sum": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "sum": 2
+    },
+    "function_cognitive": {
+      "add": 0,
+      "sum": 0
+    }
+  },
+  "example.java": {
+    "file_lines": 16,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "classify": 8
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 2
+    }
+  },
+  "example.js": {
+    "file_lines": 14,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "classify": 8
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 2
+    }
+  },
+  "example.jsx": {
+    "file_lines": 26,
+    "file_functions": 5,
+    "function_lines": {
+      "<anonymous>": 1,
+      "Badge": 6,
+      "List": 9,
+      "render": 4
+    },
+    "function_args": {
+      "<anonymous>": 1,
+      "Badge": 1,
+      "List": 1,
+      "render": 1
+    },
+    "function_cyclomatic": {
+      "<anonymous>": 1,
+      "Badge": 2,
+      "List": 3,
+      "render": 4
+    },
+    "function_cognitive": {
+      "<anonymous>": 0,
+      "Badge": 1,
+      "List": 3,
+      "render": 2
+    }
+  },
+  "example.py": {
+    "file_lines": 14,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 2,
+      "classify": 6
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 2
+    }
+  },
+  "example.rs": {
+    "file_lines": 16,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "classify": 9
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 3
+    }
+  },
+  "example.ts": {
+    "file_lines": 14,
+    "file_functions": 2,
+    "function_lines": {
+      "add": 3,
+      "classify": 8
+    },
+    "function_args": {
+      "add": 2,
+      "classify": 1
+    },
+    "function_cyclomatic": {
+      "add": 1,
+      "classify": 3
+    },
+    "function_cognitive": {
+      "add": 0,
+      "classify": 2
+    }
+  },
+  "example.tsx": {
+    "file_lines": 12,
+    "file_functions": 2,
+    "function_lines": {
+      "Badge": 1,
+      "badge": 8
+    },
+    "function_args": {
+      "Badge": 1,
+      "badge": 1
+    },
+    "function_cyclomatic": {
+      "Badge": 1,
+      "badge": 3
+    },
+    "function_cognitive": {
+      "Badge": 0,
+      "badge": 2
+    }
+  },
+  "example_constructs.cpp": {
+    "file_lines": 142,
+    "file_functions": 17,
+    "function_lines": {
+      "Shape": 1,
+      "add": 3,
+      "booleans": 6,
+      "branches": 9,
+      "guarded": 12,
+      "jumping": 8,
+      "lambdas": 10,
+      "largest": 9,
+      "loops": 20,
+      "nesting": 12,
+      "operator==": 3,
+      "sides": 3,
+      "switching": 10,
+      "ternary": 3,
+      "~Shape": 1
+    },
+    "function_args": {
+      "Shape": 1,
+      "add": 2,
+      "booleans": 3,
+      "branches": 0,
+      "guarded": 1,
+      "jumping": 1,
+      "lambdas": 3,
+      "largest": 1,
+      "loops": 3,
+      "nesting": 1,
+      "operator==": 1,
+      "sides": 0,
+      "switching": 1,
+      "ternary": 1,
+      "~Shape": 0
+    },
+    "function_cyclomatic": {
+      "Shape": 1,
+      "add": 1,
+      "booleans": 8,
+      "branches": 3,
+      "guarded": 4,
+      "jumping": 2,
+      "lambdas": 2,
+      "largest": 3,
+      "loops": 7,
+      "nesting": 5,
+      "operator==": 1,
+      "sides": 1,
+      "switching": 3,
+      "ternary": 2,
+      "~Shape": 1
+    },
+    "function_cognitive": {
+      "Shape": 0,
+      "add": 0,
+      "booleans": 4,
+      "branches": 3,
+      "guarded": 3,
+      "jumping": 2,
+      "lambdas": 2,
+      "largest": 1,
+      "loops": 6,
+      "nesting": 3,
+      "operator==": 0,
+      "sides": 0,
+      "switching": 1,
+      "ternary": 0,
+      "~Shape": 0
+    }
+  },
+  "example_constructs.java": {
+    "file_lines": 117,
+    "file_functions": 14,
+    "function_lines": {
+      "Shapes": 3,
+      "booleans": 6,
+      "branches": 9,
+      "getSides": 3,
+      "guarded": 11,
+      "lambdas": 10,
+      "loops": 20,
+      "make": 3,
+      "nesting": 12,
+      "switching": 10,
+      "ternary": 3
+    },
+    "function_args": {
+      "Shapes": 2,
+      "booleans": 3,
+      "branches": 1,
+      "getSides": 0,
+      "guarded": 1,
+      "lambdas": 1,
+      "loops": 2,
+      "make": 1,
+      "nesting": 1,
+      "switching": 1,
+      "ternary": 1
+    },
+    "function_cyclomatic": {
+      "Shapes": 1,
+      "booleans": 8,
+      "branches": 3,
+      "getSides": 1,
+      "guarded": 3,
+      "lambdas": 2,
+      "loops": 7,
+      "make": 1,
+      "nesting": 5,
+      "switching": 3,
+      "ternary": 2
+    },
+    "function_cognitive": {
+      "Shapes": 0,
+      "booleans": 4,
+      "branches": 3,
+      "getSides": 0,
+      "guarded": 2,
+      "lambdas": 2,
+      "loops": 8,
+      "make": 0,
+      "nesting": 10,
+      "switching": 1,
+      "ternary": 0
+    }
+  },
+  "example_constructs.js": {
+    "file_lines": 148,
+    "file_functions": 19,
+    "function_lines": {
+      "<anonymous>": 6,
+      "arrow": 1,
+      "arrowBlock": 3,
+      "booleans": 6,
+      "branches": 9,
+      "constructor": 3,
+      "declared": 3,
+      "describe": 3,
+      "expression": 3,
+      "generator": 3,
+      "guarded": 7,
+      "inner": 6,
+      "labeled": 11,
+      "loops": 18,
+      "make": 3,
+      "nesting": 12,
+      "switching": 10,
+      "ternary": 3,
+      "withClosure": 17
+    },
+    "function_args": {
+      "<anonymous>": 1,
+      "arrow": 1,
+      "arrowBlock": 2,
+      "booleans": 3,
+      "branches": 1,
+      "constructor": 1,
+      "declared": 2,
+      "describe": 1,
+      "expression": 3,
+      "generator": 1,
+      "guarded": 1,
+      "inner": 1,
+      "labeled": 1,
+      "loops": 2,
+      "make": 1,
+      "nesting": 1,
+      "switching": 1,
+      "ternary": 1,
+      "withClosure": 1
+    },
+    "function_cyclomatic": {
+      "<anonymous>": 2,
+      "arrow": 1,
+      "arrowBlock": 1,
+      "booleans": 8,
+      "branches": 3,
+      "constructor": 1,
+      "declared": 1,
+      "describe": 1,
+      "expression": 1,
+      "generator": 1,
+      "guarded": 2,
+      "inner": 2,
+      "labeled": 4,
+      "loops": 6,
+      "make": 1,
+      "nesting": 5,
+      "switching": 3,
+      "ternary": 2,
+      "withClosure": 5
+    },
+    "function_cognitive": {
+      "<anonymous>": 2,
+      "arrow": 0,
+      "arrowBlock": 0,
+      "booleans": 4,
+      "branches": 3,
+      "constructor": 0,
+      "declared": 0,
+      "describe": 0,
+      "expression": 0,
+      "generator": 0,
+      "guarded": 1,
+      "inner": 2,
+      "labeled": 6,
+      "loops": 6,
+      "make": 0,
+      "nesting": 10,
+      "switching": 1,
+      "ternary": 1,
+      "withClosure": 4
+    }
+  },
+  "example_constructs.py": {
+    "file_lines": 103,
+    "file_functions": 17,
+    "function_lines": {
+      "__init__": 2,
+      "booleans": 5,
+      "branches": 7,
+      "conditional": 2,
+      "declared": 2,
+      "defaults": 2,
+      "describe": 4,
+      "guarded": 9,
+      "inner": 4,
+      "lambdas": 4,
+      "loops": 14,
+      "make": 2,
+      "nested_defs": 7,
+      "nesting": 7,
+      "resources": 4
+    },
+    "function_args": {
+      "__init__": 2,
+      "booleans": 3,
+      "branches": 1,
+      "conditional": 1,
+      "declared": 2,
+      "defaults": 4,
+      "describe": 2,
+      "guarded": 1,
+      "inner": 1,
+      "lambdas": 2,
+      "loops": 2,
+      "make": 1,
+      "nested_defs": 1,
+      "nesting": 1,
+      "resources": 1
+    },
+    "function_cyclomatic": {
+      "__init__": 1,
+      "booleans": 8,
+      "branches": 3,
+      "conditional": 2,
+      "declared": 1,
+      "defaults": 1,
+      "describe": 2,
+      "guarded": 3,
+      "inner": 2,
+      "lambdas": 2,
+      "loops": 7,
+      "make": 1,
+      "nested_defs": 4,
+      "nesting": 5,
+      "resources": 3
+    },
+    "function_cognitive": {
+      "__init__": 0,
+      "booleans": 6,
+      "branches": 3,
+      "conditional": 1,
+      "declared": 0,
+      "defaults": 0,
+      "describe": 1,
+      "guarded": 3,
+      "inner": 2,
+      "lambdas": 2,
+      "loops": 7,
+      "make": 0,
+      "nested_defs": 2,
+      "nesting": 10,
+      "resources": 0
+    }
+  },
+  "example_constructs.ts": {
+    "file_lines": 138,
+    "file_functions": 17,
+    "function_lines": {
+      "<anonymous>": 6,
+      "arrow": 1,
+      "arrowBlock": 3,
+      "booleans": 6,
+      "branches": 9,
+      "constructor": 3,
+      "declared": 3,
+      "empty": 3,
+      "expression": 3,
+      "find": 8,
+      "generator": 3,
+      "guarded": 7,
+      "inner": 3,
+      "loops": 18,
+      "nesting": 12,
+      "switching": 10,
+      "withClosure": 14
+    },
+    "function_args": {
+      "<anonymous>": 1,
+      "arrow": 1,
+      "arrowBlock": 2,
+      "booleans": 3,
+      "branches": 1,
+      "constructor": 1,
+      "declared": 2,
+      "empty": 0,
+      "expression": 3,
+      "find": 1,
+      "generator": 1,
+      "guarded": 1,
+      "inner": 1,
+      "loops": 2,
+      "nesting": 1,
+      "switching": 1,
+      "withClosure": 2
+    },
+    "function_cyclomatic": {
+      "<anonymous>": 2,
+      "arrow": 1,
+      "arrowBlock": 1,
+      "booleans": 8,
+      "branches": 3,
+      "constructor": 1,
+      "declared": 1,
+      "empty": 1,
+      "expression": 1,
+      "find": 3,
+      "generator": 1,
+      "guarded": 2,
+      "inner": 2,
+      "loops": 6,
+      "nesting": 5,
+      "switching": 3,
+      "withClosure": 5
+    },
+    "function_cognitive": {
+      "<anonymous>": 2,
+      "arrow": 0,
+      "arrowBlock": 0,
+      "booleans": 4,
+      "branches": 3,
+      "constructor": 0,
+      "declared": 0,
+      "empty": 0,
+      "expression": 0,
+      "find": 3,
+      "generator": 0,
+      "guarded": 1,
+      "inner": 2,
+      "loops": 6,
+      "nesting": 10,
+      "switching": 1,
+      "withClosure": 4
+    }
+  },
+  "example_constructs.tsx": {
+    "file_lines": 56,
+    "file_functions": 7,
+    "function_lines": {
+      "<anonymous>": 6,
+      "Badge": 6,
+      "List": 9,
+      "classify": 8,
+      "constructor": 3,
+      "render": 13
+    },
+    "function_args": {
+      "<anonymous>": 1,
+      "Badge": 1,
+      "List": 1,
+      "classify": 1,
+      "constructor": 1,
+      "render": 0
+    },
+    "function_cyclomatic": {
+      "<anonymous>": 2,
+      "Badge": 2,
+      "List": 3,
+      "classify": 3,
+      "constructor": 1,
+      "render": 5
+    },
+    "function_cognitive": {
+      "<anonymous>": 2,
+      "Badge": 1,
+      "List": 3,
+      "classify": 3,
+      "constructor": 0,
+      "render": 4
+    }
+  }
+}

@@ -1,12 +1,10 @@
 use anyhow::{Context, Result};
-use rust_code_analysis::{FuncSpace, SpaceKind};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use crate::collectors::Collector;
 use crate::language::Language;
 use crate::native;
-use crate::parity::{file_level_metrics, function_metric_values, Metric};
 use crate::report::CategoryMap;
 use crate::sources::Sources;
 
@@ -78,33 +76,27 @@ impl Structural {
         let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
         let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
         let source_bytes = source.into_bytes();
-        // Detect -> dispatch -> parse, once. A language with a native
-        // implementation never touches rca; the rest still parse through it.
-        let native = native::analyze(unit.lang, &source_bytes);
-        let top = match native {
-            Some(_) => None,
-            None => match unit.lang.parse_metrics(source_bytes.clone(), unit.path) {
-                Some(parsed) => Some(parsed),
-                None => return Ok(()),
-            },
+        // Detect -> dispatch -> parse, once. Every language ratchet measures has a
+        // native implementation, so a file that fails to parse is simply skipped.
+        let Some(analysis) = native::analyze(unit.lang, &source_bytes) else {
+            return Ok(());
         };
 
         let rel = &unit.rel;
-        let (file_lines, file_functions) = file_level_metrics(native.as_ref(), top.as_ref());
+        let (file_lines, file_functions) = (analysis.file_lines(), analysis.file_functions());
         self.record(violations, CATEGORY_FILE_LINES, rel.to_string(), file_lines);
         self.record(violations, CATEGORY_FILE_FUNCTIONS, rel.to_string(), file_functions);
 
-        // Each function-level metric dispatches to the native path for Rust and
-        // to rca otherwise; entity names line up across metrics via the shared
-        // walk order. The dispatch lives in `parity` to keep this file flat.
+        // Each function-level metric, keyed by the same walk order so entity names
+        // line up across categories.
         let function_metrics = [
-            (Metric::FunctionLines, CATEGORY_FUNCTION_LINES),
-            (Metric::FunctionCognitive, CATEGORY_FUNCTION_COGNITIVE),
-            (Metric::FunctionCyclomatic, CATEGORY_FUNCTION_CYCLOMATIC),
-            (Metric::FunctionArgs, CATEGORY_FUNCTION_ARGS),
+            (CATEGORY_FUNCTION_LINES, analysis.function_lines()),
+            (CATEGORY_FUNCTION_COGNITIVE, analysis.function_cognitive()),
+            (CATEGORY_FUNCTION_CYCLOMATIC, analysis.function_cyclomatic()),
+            (CATEGORY_FUNCTION_ARGS, analysis.function_nargs()),
         ];
-        for (metric, category) in function_metrics {
-            for (name, value) in function_metric_values(metric, native.as_ref(), top.as_ref()) {
+        for (category, values) in function_metrics {
+            for (name, value) in values {
                 self.record(violations, category, format!("{rel}::{name}"), value);
             }
         }
@@ -130,48 +122,27 @@ fn relative_path(path: &Path, root: &Path) -> String {
     path.strip_prefix(root).unwrap_or(path).to_string_lossy().into_owned()
 }
 
-pub(crate) fn sloc_for(space: &FuncSpace) -> u64 {
-    space.metrics.loc.sloc().round() as u64
-}
-
-pub(crate) fn cognitive_for(space: &FuncSpace) -> u64 {
-    space.metrics.cognitive.cognitive_sum().round() as u64
-}
-
-pub(crate) fn cyclomatic_for(space: &FuncSpace) -> u64 {
-    space.metrics.cyclomatic.cyclomatic_sum().round() as u64
-}
-
-pub(crate) fn args_for(space: &FuncSpace) -> u64 {
-    let fn_args = space.metrics.nargs.fn_args();
-    let closure_args = space.metrics.nargs.closure_args();
-    fn_args.max(closure_args).round() as u64
-}
-
-pub(crate) fn function_count_for(space: &FuncSpace) -> u64 {
-    space.metrics.nom.total().round() as u64
-}
-
-/// Print the FuncSpace tree for a single file, dispatching on its extension.
-/// Used by the `ratchet dump` debug command to inspect what
-/// rust-code-analysis emits.
+/// Print the function spaces ratchet finds in a single file, with their metrics.
+/// Used by the `ratchet dump` debug command to inspect what the native path sees.
 pub fn dump_tree(path: &Path) -> Result<()> {
     let Some(lang) = path.extension().and_then(|e| e.to_str()).and_then(Language::from_extension) else {
         println!("(unsupported extension)");
         return Ok(());
     };
     let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-    let Some(top) = lang.parse_metrics(bytes, path) else {
-        println!("(no metrics)");
+    let Some(analysis) = native::analyze(lang, &bytes) else {
+        println!("(could not parse)");
         return Ok(());
     };
-    fn rec(s: &FuncSpace, depth: usize) {
-        println!("{:>3}-{:>3} {:width$}{:?} {:?}", s.start_line, s.end_line, "", s.kind, s.name, width = depth * 2);
-        for c in &s.spaces {
-            rec(c, depth + 1);
-        }
+    println!("{lang:?}  file_lines={}  file_functions={}", analysis.file_lines(), analysis.file_functions());
+    let lines = analysis.function_lines();
+    let args = analysis.function_nargs();
+    let cyclomatic = analysis.function_cyclomatic();
+    let cognitive = analysis.function_cognitive();
+    for i in 0..lines.len() {
+        let (name, sloc) = &lines[i];
+        println!("  {name:<32} lines={sloc:<4} args={:<3} cyclomatic={:<3} cognitive={}", args[i].1, cyclomatic[i].1, cognitive[i].1);
     }
-    rec(&top, 0);
     Ok(())
 }
 
@@ -200,36 +171,6 @@ fn strip_test_modules(source: &str) -> String {
     result
 }
 
-/// Visit every `Function`-kind space in the tree, including nested ones
-/// (closures and methods).
-pub(crate) fn visit_function_spaces(top: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
-    fn recurse(space: &FuncSpace, f: &mut impl FnMut(&FuncSpace)) {
-        for child in &space.spaces {
-            if child.kind == SpaceKind::Function {
-                f(child);
-            }
-            recurse(child, f);
-        }
-    }
-    recurse(top, f);
-}
-
-/// Return a stable per-file entity name for a function space.
-///
-/// Named functions and methods reuse the name produced by
-/// `rust-code-analysis` (e.g. `Foo::bar`). Anonymous closures get a
-/// sequential `{closure_NN}` synthesized in source order.
-pub(crate) fn function_entity_name(space: &FuncSpace, closure_counter: &mut u32) -> String {
-    match &space.name {
-        Some(name) if !name.is_empty() => name.clone(),
-        _ => {
-            let id = *closure_counter;
-            *closure_counter += 1;
-            format!("{{closure_{id}}}")
-        },
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -247,19 +188,6 @@ mod tests {
         let entries = vio.get(CATEGORY_FUNCTION_LINES).unwrap();
         assert!(!entries.contains_key("x.rs::foo"));
         assert_eq!(entries.get("x.rs::bar"), Some(&1));
-    }
-
-    #[test]
-    fn test_function_entity_name_synthesizes_closure_names() {
-        let mut counter = 0;
-        let mut empty_name_space = blank_space();
-        empty_name_space.name = None;
-        assert_eq!(function_entity_name(&empty_name_space, &mut counter), "{closure_0}");
-        assert_eq!(function_entity_name(&empty_name_space, &mut counter), "{closure_1}");
-    }
-
-    fn blank_space() -> FuncSpace {
-        FuncSpace { name: Some("foo".into()), start_line: 1, end_line: 1, kind: SpaceKind::Function, spaces: Vec::new(), metrics: Default::default() }
     }
 
     #[test]

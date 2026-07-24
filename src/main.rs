@@ -1,8 +1,9 @@
 mod collectors;
 mod config;
+#[cfg(test)]
+mod golden;
 mod language;
 mod native;
-mod parity;
 mod ratchet;
 mod report;
 mod sources;
@@ -46,7 +47,7 @@ enum Cmd {
         #[arg(long, default_value = "origin/main")]
         base: String,
     },
-    /// Debug: dump the FuncSpace tree for one file.
+    /// Debug: dump the function spaces and metrics ratchet sees in one file.
     Dump { path: PathBuf },
 }
 
