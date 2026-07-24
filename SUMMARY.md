@@ -5,8 +5,8 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
-| ongoing | 5 |
+| backlog | 21 |
+| ongoing | 6 |
 | done | 24 |
 | **total** | **51** |
 
@@ -49,7 +49,7 @@
 ### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](ongoing/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 94% (29/31 pts · 7/8 done) · _low_ · ongoing
 
 - [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
-- [ ] [#9gkaehf Drop the rust-code-analysis dependency](backlog/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(backlog)_
+- [ ] [#9gkaehf Drop the rust-code-analysis dependency](ongoing/9gkaehf-drop-the-rust-code-analysis-dependency.md) _(ongoing)_
 - [x] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](done/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md)
 - [x] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](done/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md)
 - [x] [#knau82g Generalize the native layer to be language-parameterized](done/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
