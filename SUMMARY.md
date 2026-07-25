@@ -5,20 +5,21 @@
 
 | State | Count |
 |---|---:|
-| backlog | 20 |
-| ongoing | 4 |
-| done | 34 |
-| **total** | **58** |
+| backlog | 21 |
+| ongoing | 3 |
+| done | 35 |
+| **total** | **59** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 64% (18/28 pts · 9/14 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 69% (20/29 pts · 10/15 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
+- [ ] [#ec8ph6b Verify the action's cargo-install fallback on a runner](backlog/ec8ph6b-verify-the-action-s-cargo-install-fallback-on-a-runner.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
 - [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
-- [ ] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](ongoing/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md) _(ongoing)_
+- [x] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](done/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md)
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
 - [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
