@@ -95,11 +95,13 @@ esac
 
 # --- pick a downloader -----------------------------------------------------
 if have curl; then
-	http_get() { curl -fsSL "$1"; }
 	http_dl() { curl -fsSL -o "$2" "$1"; }
+	# Final URL after following redirects — for …/releases/latest that is …/releases/tag/<tag>.
+	final_url() { curl -fsSLI -o /dev/null -w '%{url_effective}' "$1"; }
 elif have wget; then
-	http_get() { wget -qO- "$1"; }
 	http_dl() { wget -qO "$2" "$1"; }
+	# wget follows redirects with --spider; the last Location header is the tag URL.
+	final_url() { wget -qS --spider "$1" 2>&1 | sed -n 's/^[[:space:]]*[Ll]ocation:[[:space:]]*//p' | tail -n1; }
 else
 	die "need curl or wget on PATH"
 fi
@@ -107,8 +109,9 @@ fi
 # --- resolve the release tag ----------------------------------------------
 if [ "$VERSION" = latest ]; then
 	log "resolving latest release of $REPO ..."
-	VERSION="$(http_get "https://api.github.com/repos/$REPO/releases/latest" |
-		sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+	# Resolve via the github.com redirect rather than api.github.com, which has a
+	# tight unauthenticated rate limit that 403s on shared CI runner IPs.
+	VERSION="$(final_url "https://github.com/$REPO/releases/latest" | sed -n 's#.*/releases/tag/##p' | tr -d '[:space:]')"
 	[ -n "$VERSION" ] || die "could not resolve the latest release tag (is a release published yet?)"
 fi
 

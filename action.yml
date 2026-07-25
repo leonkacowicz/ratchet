@@ -39,9 +39,13 @@ runs:
           bin="$dir/ratchet"
         else
           echo "::warning::no prebuilt ratchet for this platform; building from source with cargo"
-          tagargs=()
-          [ "$RATCHET_VERSION" != "latest" ] && tagargs=(--tag "$RATCHET_VERSION")
-          cargo install --git "https://github.com/$repo" --locked "${tagargs[@]}" --root "$dir/cargo"
+          # No bash arrays: macOS runners ship bash 3.2, where `"${arr[@]}"` on an
+          # empty array errors under `set -u`.
+          if [ "$RATCHET_VERSION" = latest ]; then
+            cargo install --git "https://github.com/$repo" --locked --root "$dir/cargo"
+          else
+            cargo install --git "https://github.com/$repo" --locked --tag "$RATCHET_VERSION" --root "$dir/cargo"
+          fi
           bin="$dir/cargo/bin/ratchet"
           echo "$dir/cargo/bin" >>"$GITHUB_PATH"
         fi
@@ -64,7 +68,11 @@ runs:
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
 
         if ($ver -eq 'latest') {
-          $ver = (Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest").tag_name
+          # Resolve via the github.com redirect, not api.github.com — the latter has a
+          # tight unauthenticated rate limit that 403s on shared CI runner IPs.
+          $r = Invoke-WebRequest "https://github.com/$repo/releases/latest" -MaximumRedirection 0 -SkipHttpErrorCheck
+          $loc = [string]$r.Headers.Location
+          $ver = $loc.Substring($loc.LastIndexOf('/') + 1)
         }
 
         if ($env:RUNNER_ARCH -eq 'X64') {
