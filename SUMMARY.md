@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 21 |
+| backlog | 20 |
 | ongoing | 3 |
-| done | 37 |
+| done | 38 |
 | **total** | **61** |
 
 ## Hierarchies
@@ -47,11 +47,11 @@
 - [ ] [#pm3sm8p Coupling metrics (fan-in/fan-out, instability)](backlog/pm3sm8p-coupling-metrics-fan-in-fan-out-instability.md) _(backlog)_
 - [ ] [#xg5fk9a Extract module import/dependency graph](backlog/xg5fk9a-extract-module-import-dependency-graph.md) _(backlog)_
 
-### [#cjdfqrx Multi-language support](ongoing/cjdfqrx-multi-language-support.md) — 42% (8/19 pts · 2/5 done) · _high_ · ongoing
+### [#cjdfqrx Multi-language support](ongoing/cjdfqrx-multi-language-support.md) — 65% (11/17 pts · 3/5 done) · _high_ · ongoing
 
-- [ ] [#7g5s97m Go support via external-tool collector](backlog/7g5s97m-go-support-via-external-tool-collector.md) _(backlog)_
+- [ ] [#7g5s97m Go support via native tree-sitter](backlog/7g5s97m-go-support-via-external-tool-collector.md) _(backlog)_
 - [ ] [#b3bbdge Kotlin support](backlog/b3bbdge-kotlin-support.md) _(backlog)_
-- [ ] [#e4jhf5c Handle uneven metric coverage across languages](backlog/e4jhf5c-handle-uneven-metric-coverage-across-languages.md) _(backlog)_
+- [x] [#e4jhf5c Handle uneven metric coverage across languages](done/e4jhf5c-handle-uneven-metric-coverage-across-languages.md)
 - [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
 - [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
 
