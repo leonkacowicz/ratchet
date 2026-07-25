@@ -13,17 +13,16 @@ artifact, a report downloaded from a release, a hand-crafted baseline, or compar
 generated reports outside any repo.
 
 ## Acceptance criteria
-- [ ] `ratchet compare` accepts a baseline that is a filesystem path to a `quality-report.json`.
-- [ ] Decide and document the argument surface (e.g. `--base-file <path>` alongside the
-      existing `--base <ref>`, or teach `--base` to detect a path vs. a ref). Only one of
-      ref/file may be supplied at a time.
-- [ ] When given a file path, the baseline is read directly from that file (no git
+- [x] `ratchet compare` accepts a baseline that is a filesystem path to a `quality-report.json`.
+- [x] Decide and document the argument surface: went with an explicit `--base-file <path>`
+      flag alongside `--base <ref>`, marked `conflicts_with = "base"` so only one may be given.
+- [x] When given a file path, the baseline is read directly from that file (no git
       invocation), then run through the same `ratchet::check` comparison and the same
       threshold-mismatch guard as the git-ref path.
-- [ ] A missing baseline file is a clear error (not the silent bootstrap-skip that a missing
+- [x] A missing baseline file is a clear error (not the silent bootstrap-skip that a missing
       committed report triggers) — the user explicitly named a file, so a typo shouldn't pass.
-- [ ] Happy-path + error tests, mirroring the existing `read_report_at_ref` tests.
-- [ ] `--help`, `CLAUDE.md` command list, and README/usage docs updated.
+- [x] Happy-path + error tests, mirroring the existing `read_report_at_ref` tests.
+- [x] `--help`, `CLAUDE.md` command list, and README/usage docs updated.
 
 ## Notes
 
