@@ -110,13 +110,19 @@ ratchet check --root .
 # CI step 2: fail if the current report regresses against a baseline ref.
 ratchet compare --root . --base origin/main
 
+# ...or compare against a baseline report read straight from disk (e.g. a CI artifact).
+ratchet compare --base-file old-report.json
+
 # Debug: dump the parsed function/space tree for one file.
 ratchet dump src/foo.rs
 ```
 
 `--root` defaults to the current directory. `check` and `compare` read the committed
-`quality-report.json`; `compare` reads the baseline via `git show <base>:quality-report.json`
-and skips (bootstrap mode) if the baseline has no report yet.
+`quality-report.json`; by default `compare` reads the baseline via
+`git show <base>:quality-report.json` and skips (bootstrap mode) if the baseline has no
+report yet. Pass `--base-file <path>` to read the baseline from a file on disk instead — the
+path is used as given (not relative to `--root`), it is mutually exclusive with `--base`, and
+a missing file is an error rather than a bootstrap skip.
 
 Thresholds may not change in the same commit that adds a violation — a threshold edit
 between baseline and HEAD is rejected, forcing it into its own reviewable PR.

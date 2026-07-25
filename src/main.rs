@@ -41,11 +41,16 @@ enum Cmd {
     Generate,
     /// Verify that the committed quality-report.json matches the current codebase.
     Check,
-    /// Compare the committed quality-report.json against a baseline git ref.
+    /// Compare the committed quality-report.json against a baseline git ref or file.
     Compare {
         /// Git ref to compare against (e.g. origin/main).
         #[arg(long, default_value = "origin/main")]
         base: String,
+        /// Path to a baseline quality-report.json to compare against, read directly from
+        /// disk instead of from a git ref. Mutually exclusive with `--base`; unlike a git
+        /// ref, a missing file is an error rather than a bootstrap skip.
+        #[arg(long, conflicts_with = "base")]
+        base_file: Option<PathBuf>,
     },
     /// Debug: dump the function spaces and metrics ratchet sees in one file.
     Dump { path: PathBuf },
@@ -75,7 +80,7 @@ fn run(cmd: Cmd, root: &Path, config: Option<&Path>) -> Result<()> {
     match cmd {
         Cmd::Generate => cmd_generate(root, config),
         Cmd::Check => cmd_check(root, config),
-        Cmd::Compare { base } => cmd_compare(root, &base),
+        Cmd::Compare { base, base_file } => cmd_compare(root, &base, base_file.as_deref()),
         Cmd::Dump { path } => collectors::structural::dump_tree(&path),
     }
 }
@@ -104,16 +109,27 @@ fn cmd_check(root: &Path, config: Option<&Path>) -> Result<()> {
     Ok(())
 }
 
-/// Fail if the committed report regresses against the baseline git ref.
-fn cmd_compare(root: &Path, base: &str) -> Result<()> {
+/// Fail if the committed report regresses against the baseline. The baseline is read from a
+/// file when `base_file` is given, otherwise from the git ref `base`.
+fn cmd_compare(root: &Path, base: &str, base_file: Option<&Path>) -> Result<()> {
     let current = read_committed(root)?;
-    let Some(baseline) = read_report_at_ref(root, base)? else {
+    // A file baseline is used verbatim (never joined onto `--root`) and a missing file is a
+    // hard error; only the git-ref path bootstrap-skips when no baseline exists.
+    let baseline = match base_file {
+        Some(path) => Some(read_report_from_file(path)?),
+        None => read_report_at_ref(root, base)?,
+    };
+    let Some(baseline) = baseline else {
         eprintln!("warning: no {REPORT_FILE} at {base} — bootstrap mode, ratchet skipped");
         return Ok(());
     };
     if baseline.thresholds != current.thresholds {
+        let source = match base_file {
+            Some(path) => path.display().to_string(),
+            None => base.to_string(),
+        };
         bail!(
-            "thresholds differ between {base} and HEAD; threshold edits must \
+            "thresholds differ between {source} and HEAD; threshold edits must \
              land in their own PR. Revert the threshold change or split the PR."
         );
     }
@@ -129,6 +145,13 @@ fn cmd_compare(root: &Path, base: &str) -> Result<()> {
 fn read_committed(root: &Path) -> Result<Report> {
     let path = root.join(REPORT_FILE);
     Report::read_from(&path).with_context(|| format!("reading {}", path.display()))
+}
+
+/// Read a baseline report directly from a filesystem path. The path is used as given (not
+/// joined onto `--root`), and a missing or unparseable file is an error — the user named it
+/// explicitly, so a typo must surface rather than silently bootstrap-skip the gate.
+fn read_report_from_file(path: &Path) -> Result<Report> {
+    Report::read_from(path).with_context(|| format!("reading baseline report {}", path.display()))
 }
 
 fn read_report_at_ref(root: &Path, base: &str) -> Result<Option<Report>> {
@@ -247,5 +270,26 @@ mod tests {
         git(root, &["commit", "-q", "--no-verify", "-m", "no report"]);
 
         assert_eq!(read_report_at_ref(root, "HEAD").unwrap(), None);
+    }
+
+    /// A file-path baseline is read directly from disk, with no git involved.
+    #[test]
+    fn test_read_report_from_file_reads_the_named_file() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("baseline.json");
+        let baseline = Report::new(default_thresholds(), CategoryMap::new());
+        baseline.write_to(&path).unwrap();
+
+        assert_eq!(read_report_from_file(&path).unwrap(), baseline);
+    }
+
+    /// Unlike the git-ref path (missing → bootstrap `None`), a missing file baseline is a
+    /// hard error: the user named the file explicitly, so a typo must not silently skip the gate.
+    #[test]
+    fn test_read_report_from_file_missing_is_error() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("does-not-exist.json");
+
+        assert!(read_report_from_file(&path).is_err());
     }
 }

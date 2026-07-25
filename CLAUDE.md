@@ -65,6 +65,7 @@ organizational metrics are the roadmap — see issue tracking below.
 ratchet generate --root .              # write quality-report.json (commit the result)
 ratchet check --root .                 # CI: fail if the committed report is stale
 ratchet compare --root . --base origin/main   # CI: fail on regression vs a baseline ref
+ratchet compare --base-file old-report.json   # ...or vs a baseline report read from disk
 ratchet dump src/foo.rs                # debug: dump the parsed FuncSpace tree
 ```
 
