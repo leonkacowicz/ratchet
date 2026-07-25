@@ -5,9 +5,9 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
+| backlog | 21 |
 | ongoing | 3 |
-| done | 35 |
+| done | 36 |
 | **total** | **60** |
 
 ## Hierarchies
@@ -87,7 +87,7 @@
 
 ## Backlog
 
-- [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](backlog/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_
+_none_
 
 ## Ongoing
 
@@ -96,3 +96,4 @@ _none_
 ## Done
 
 - [#8bqetja Release v0.1.0](done/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
+- [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](done/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_ (closed 2026-07-25)
