@@ -30,6 +30,9 @@ runs:
         RATCHET_VERSION: ${{ inputs.version }}
       run: |
         set -eu
+        # GITHUB_ACTION_REPOSITORY is unset when the action runs as `uses: ./`
+        # (local checkout); fall back to the canonical repo, as install.sh does.
+        repo="${GITHUB_ACTION_REPOSITORY:-leonkacowicz/ratchet}"
         dir="$RUNNER_TEMP/ratchet-bin"
         mkdir -p "$dir"
         if bash "$GITHUB_ACTION_PATH/install.sh" --version "$RATCHET_VERSION" --bin-dir "$dir"; then
@@ -38,7 +41,7 @@ runs:
           echo "::warning::no prebuilt ratchet for this platform; building from source with cargo"
           tagargs=()
           [ "$RATCHET_VERSION" != "latest" ] && tagargs=(--tag "$RATCHET_VERSION")
-          cargo install --git "https://github.com/$GITHUB_ACTION_REPOSITORY" --locked "${tagargs[@]}" --root "$dir/cargo"
+          cargo install --git "https://github.com/$repo" --locked "${tagargs[@]}" --root "$dir/cargo"
           bin="$dir/cargo/bin/ratchet"
           echo "$dir/cargo/bin" >>"$GITHUB_PATH"
         fi
@@ -54,7 +57,8 @@ runs:
         RATCHET_VERSION: ${{ inputs.version }}
       run: |
         $ErrorActionPreference = 'Stop'
-        $repo = $env:GITHUB_ACTION_REPOSITORY
+        # Unset under `uses: ./`; fall back to the canonical repo like install.sh.
+        $repo = if ($env:GITHUB_ACTION_REPOSITORY) { $env:GITHUB_ACTION_REPOSITORY } else { 'leonkacowicz/ratchet' }
         $ver = $env:RATCHET_VERSION
         $dir = Join-Path $env:RUNNER_TEMP 'ratchet-bin'
         New-Item -ItemType Directory -Force -Path $dir | Out-Null

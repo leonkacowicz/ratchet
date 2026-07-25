@@ -1,0 +1,39 @@
+name: Action smoke test
+
+# Exercise the composite install action on real runners — the one thing that
+# can't be checked locally. On each OS it should download the matching prebuilt
+# release asset, verify its checksum, put `ratchet` on PATH, and run. This is
+# what would have caught the retired-runner problem that stalled v0.1.0.
+#
+# Runs only when the action or installer changes (they can't be unit-tested) or
+# on demand, to keep macOS/Windows minutes in check.
+on:
+  push:
+    branches: [main]
+    paths: ["action.yml", "install.sh", ".github/workflows/action-smoke-test.yml"]
+  pull_request:
+    paths: ["action.yml", "install.sh", ".github/workflows/action-smoke-test.yml"]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: install via action (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+
+      # `uses: ./` runs the action from this checkout against the real published
+      # release (default input `version: latest`), so it validates action.yml +
+      # install.sh as they stand in this branch.
+      - id: install
+        uses: ./
+
+      - name: ratchet is on PATH and runs
+        shell: bash
+        run: |
+          ratchet --version
+          echo "action reported version: ${{ steps.install.outputs.version }}"
