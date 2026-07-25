@@ -132,7 +132,11 @@ fn read_committed(root: &Path) -> Result<Report> {
 }
 
 fn read_report_at_ref(root: &Path, base: &str) -> Result<Option<Report>> {
-    let spec = format!("{base}:{REPORT_FILE}");
+    // The `./` prefix makes git resolve the pathspec relative to `current_dir(root)`
+    // rather than the repository top-level, so `compare --root <subdir>` reads the
+    // baseline from `<ref>:<subdir>/quality-report.json` (matching where `check` and
+    // `generate` read/write it) instead of a root-level report that may not exist.
+    let spec = format!("{base}:./{REPORT_FILE}");
     let out = Command::new("git").args(["show", &spec]).current_dir(root).output().context("running git show")?;
     if !out.status.success() {
         return Ok(None);
@@ -168,4 +172,80 @@ fn pretty_diff(a: &str, b: &str) -> String {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::report::{default_thresholds, CategoryMap};
+    use tempfile::TempDir;
+
+    /// Run a git command in `dir`, with a self-contained identity and hooks skipped
+    /// so the test is hermetic.
+    fn git(dir: &Path, args: &[&str]) {
+        let ok = Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@example.com")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@example.com")
+            .status()
+            .expect("run git")
+            .success();
+        assert!(ok, "git {args:?} failed");
+    }
+
+    /// `compare --root <subdir>` must read the baseline from `<ref>:<subdir>/quality-report.json`,
+    /// not the repo-root path — otherwise a per-component gate (a report per subdirectory, none at
+    /// the repo root) never finds a baseline and silently bootstrap-skips (bug ww4ye7a).
+    #[test]
+    fn test_read_report_at_ref_respects_root_subdir() {
+        let repo = TempDir::new().unwrap();
+        let root = repo.path();
+        let sub = root.join("component");
+        std::fs::create_dir_all(&sub).unwrap();
+
+        // A committed per-component baseline under the subdir, and NO report at the repo root.
+        let baseline = Report::new(default_thresholds(), CategoryMap::new());
+        baseline.write_to(&sub.join(REPORT_FILE)).unwrap();
+
+        git(root, &["init", "-q"]);
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-q", "--no-verify", "-m", "baseline"]);
+
+        let got = read_report_at_ref(&sub, "HEAD").unwrap();
+        assert_eq!(got, Some(baseline), "baseline must be read from <root>/quality-report.json at the ref");
+    }
+
+    /// The common case — report at the repo root, `--root` = repo root — still works after the
+    /// `./` pathspec change.
+    #[test]
+    fn test_read_report_at_ref_reads_root_level_report() {
+        let repo = TempDir::new().unwrap();
+        let root = repo.path();
+
+        let baseline = Report::new(default_thresholds(), CategoryMap::new());
+        baseline.write_to(&root.join(REPORT_FILE)).unwrap();
+
+        git(root, &["init", "-q"]);
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-q", "--no-verify", "-m", "baseline"]);
+
+        assert_eq!(read_report_at_ref(root, "HEAD").unwrap(), Some(baseline));
+    }
+
+    /// No committed report at the ref → `None` (bootstrap mode), not an error.
+    #[test]
+    fn test_read_report_at_ref_missing_is_none() {
+        let repo = TempDir::new().unwrap();
+        let root = repo.path();
+        std::fs::write(root.join("marker.txt"), "x").unwrap();
+
+        git(root, &["init", "-q"]);
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-q", "--no-verify", "-m", "no report"]);
+
+        assert_eq!(read_report_at_ref(root, "HEAD").unwrap(), None);
+    }
 }
