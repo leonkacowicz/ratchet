@@ -21,13 +21,22 @@ git looks for a root-level `quality-report.json`. `read_committed` (disk read) u
 and is correct; only the git-ref read is wrong.
 
 ## Acceptance criteria
-- [ ] `ratchet compare --root <subdir> --base <ref>` reads the baseline from
+- [x] `ratchet compare --root <subdir> --base <ref>` reads the baseline from
       `<ref>:<subdir>/quality-report.json` (respects `--root`), matching where `check`/`generate`
       read/write the report
-- [ ] A committed per-component baseline is found (no false "bootstrap mode") and regressions are
+- [x] A committed per-component baseline is found (no false "bootstrap mode") and regressions are
       detected
-- [ ] Regression test: a repo with `sub/quality-report.json` (and none at root) where `compare
+- [x] Regression test: a repo with `sub/quality-report.json` (and none at root) where `compare
       --root sub` against a base ref both (a) finds the baseline and (b) fails on a seeded regression
+
+## Resolution
+Fixed in `read_report_at_ref` by prefixing the pathspec with `./` — `git show <ref>:./quality-report.json`
+with `current_dir(root)` resolves to `<root>/quality-report.json` (as suggested). TDD: added a
+`#[cfg(test)]` module to `src/main.rs` — a failing test for the subdir case first, then the fix,
+plus regression tests for the root-level and missing-report (bootstrap → `None`) branches.
+Verified end-to-end with the issue's minimal repro: `compare --root sub` now finds the baseline
+(`ok: ratchet check passed`) and fails on a seeded regression (`function_args total excess grew:
+0 → 1`). Shipped in v0.1.1.
 
 ## Notes
 - **ratchet version:** `ratchet 0.1.0`
