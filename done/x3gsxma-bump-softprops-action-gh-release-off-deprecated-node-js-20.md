@@ -13,12 +13,20 @@ cleared `ci.yml`'s actions but did not touch the release workflow.
 See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 
 ## Acceptance criteria
-- [ ] The Release run's "Publish GitHub Release" job produces no Node.js-runtime
+- [x] The Release run's "Publish GitHub Release" job produces no Node.js-runtime
       deprecation annotation
-- [ ] `softprops/action-gh-release` pinned to a version that targets a supported runtime
+- [x] `softprops/action-gh-release` pinned to a version that targets a supported runtime
 
 ## Notes
 Observed on release run 30135776271 (v0.1.0): the only remaining Node.js-20 annotation is
 `softprops/action-gh-release@v2`. It was the last action still on the old runtime after
 the `ci.yml` bumps. Check whether a newer `@v2` patch tag has already migrated before
 jumping majors, since the annotation targets the resolved runtime, not the tag.
+
+Resolution: the entire `v2` line — including the latest `v2.6.2` — still declares
+`using: "node20"` in its `action.yml`; only the `v3` majors migrated (`v3.0.2`,
+released 2026-07-13, declares `using: "node24"`). So a patch bump within `v2` couldn't
+clear the warning; bumped `release.yml` to `softprops/action-gh-release@v3`, matching the
+repo's major-version tag-pinning convention (`@v5`, `@v7`, `@v8`, etc.). The first
+acceptance box is verified by construction (v3 resolves to node24); it will be confirmed
+live on the next `v*` release run.
