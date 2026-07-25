@@ -2,9 +2,10 @@ name: Release
 
 # Cut a release: bump the version in Cargo.toml, commit, then push a `v*` tag
 # (e.g. `git tag v0.1.0 && git push origin v0.1.0`). This builds a binary per
-# platform on a native runner — so the `cc`-compiled tree-sitter grammar never
-# has to cross-compile — packages each with a SHA-256 checksum, and attaches
-# them all to a GitHub Release for the tag.
+# platform — natively where a runner exists, and cross-compiling the Intel-mac
+# target from the Apple-silicon runner (the Intel `macos-13` image is retired) —
+# packages each with a SHA-256 checksum, and attaches them all to a GitHub
+# Release for the tag.
 
 on:
   push:
@@ -26,7 +27,11 @@ jobs:
       matrix:
         include:
           - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
-          - { target: x86_64-apple-darwin, os: macos-13 } # Intel host
+          # Both macOS targets build on the Apple-silicon runner: the native
+          # `macos-13` Intel runner is being retired by GitHub (jobs sit queued
+          # forever), and Apple clang cross-compiles the `cc`-built tree-sitter
+          # grammar to x86_64 without trouble.
+          - { target: x86_64-apple-darwin, os: macos-14 } # Intel, cross-compiled
           - { target: aarch64-apple-darwin, os: macos-14 } # Apple-silicon host
           - { target: x86_64-pc-windows-msvc, os: windows-latest }
     steps:
