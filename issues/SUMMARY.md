@@ -5,10 +5,10 @@
 
 | State | Count |
 |---|---:|
-| backlog | 21 |
+| backlog | 22 |
 | ongoing | 3 |
 | done | 35 |
-| **total** | **59** |
+| **total** | **60** |
 
 ## Hierarchies
 
@@ -87,7 +87,7 @@
 
 ## Backlog
 
-_none_
+- [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](backlog/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_
 
 ## Ongoing
 
