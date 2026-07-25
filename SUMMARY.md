@@ -6,24 +6,25 @@
 | State | Count |
 |---|---:|
 | backlog | 21 |
-| ongoing | 3 |
+| ongoing | 4 |
 | done | 33 |
-| **total** | **57** |
+| **total** | **58** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 63% (17/27 pts · 8/13 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 61% (17/28 pts · 8/14 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
 - [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
-- [ ] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](backlog/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md) _(backlog)_
+- [ ] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](ongoing/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md) _(ongoing)_
 - [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
 - [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 - [x] [#uuf98vh Standalone install script for prebuilt binaries](done/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
+- [ ] [#x3gsxma Bump softprops/action-gh-release off deprecated Node.js 20](backlog/x3gsxma-bump-softprops-action-gh-release-off-deprecated-node-js-20.md) _(backlog)_
 - [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](done/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
 - [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](done/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
 - [x] [#z9cywvc Drop vendored mozjs for published tree-sitter-javascript](done/z9cywvc-drop-vendored-mozjs-for-published-tree-sitter-javascript.md)
