@@ -1,6 +1,6 @@
 [package]
 name = "ratchet"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Language-agnostic code-quality ratchet: snapshot structural metrics and block regressions in CI."
 publish = false

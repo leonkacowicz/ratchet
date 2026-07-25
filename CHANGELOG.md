@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-07-25
+
+### Fixed
+
+- **`compare` respects `--root` for the baseline.** `ratchet compare --root <subdir>` read
+  the baseline report from the repo root instead of `<subdir>/quality-report.json` at the
+  base ref, so per-component / monorepo gates never found a baseline and silently
+  bootstrap-skipped. The regression gate now works per component.
+- **The install action works on macOS and resists API rate limits.** The composite action
+  and `install.sh` now resolve the latest release via the github.com redirect instead of
+  `api.github.com` (which 403s on shared CI runner IPs), and the action's cargo fallback no
+  longer uses a bash array that crashes under macOS's bash 3.2.
+
+### Added
+
+- An action smoke-test workflow that exercises the install action on Linux, macOS, and
+  Windows runners whenever `action.yml` or `install.sh` changes.
+- A README "adopting in your repo" checklist (source roots, language coverage, excluding
+  test/generated code, sanity-checking the baseline).
+
 ## [0.1.0] - 2026-07-24
 
 First tagged release: a language-agnostic, one-way code-quality ratchet that snapshots

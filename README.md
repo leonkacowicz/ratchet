@@ -89,7 +89,7 @@ not covered by the script; grab the `.zip` from the releases page.
 Prefer to do it by hand? Download, verify, and install directly:
 
 ```sh
-tag=v0.1.0
+tag=v0.1.1
 base=https://github.com/leonkacowicz/ratchet/releases/download/$tag
 asset=ratchet-$tag-x86_64-unknown-linux-gnu.tar.gz
 curl -fsSL -O $base/$asset -O $base/$asset.sha256
@@ -202,7 +202,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # so `compare` can read the baseline report from the base ref
-      - uses: leonkacowicz/ratchet@v0.1.0 # installs `ratchet` onto PATH (or @main for latest)
+      - uses: leonkacowicz/ratchet@v0.1.1 # installs `ratchet` onto PATH (or @main for latest)
       - run: ratchet check --root . # committed report must match the code
       - if: github.event_name == 'pull_request' # no regression vs the base branch
         run: |
