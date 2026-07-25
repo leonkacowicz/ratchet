@@ -50,9 +50,9 @@ These two rules together give useful properties for free:
 
 ### From source with `cargo install`
 
-Requires a Rust toolchain (the build compiles a few tree-sitter grammars from C, so a C
-compiler must be on `PATH`). `--locked` builds against the committed `Cargo.lock` for a
-reproducible install:
+Requires a Rust toolchain and a C compiler on `PATH` (the tree-sitter grammar crates
+compile their bundled C parsers during the build). `--locked` builds against the committed
+`Cargo.lock` for a reproducible install:
 
 ```sh
 cargo install --git https://github.com/leonkacowicz/ratchet --locked
@@ -134,10 +134,11 @@ metric coverage:
 | Java | `.java` | tree-sitter-java |
 | JavaScript | `.js` `.mjs` `.cjs` `.jsx` | tree-sitter-javascript |
 | TypeScript | `.ts` | tree-sitter-typescript |
-| TSX | `.tsx` | tree-sitter-tsx |
+| TSX | `.tsx` | tree-sitter-typescript (TSX grammar) |
 
 Extension routing follows the conventional mapping (e.g. `.js`/`.jsx` go to
-tree-sitter-javascript; `tree-sitter-cpp` covers both C and C++). Only files with a supported extension
+tree-sitter-javascript; `tree-sitter-cpp` covers both C and C++; `.ts` and `.tsx` are the
+two grammars in the `tree-sitter-typescript` crate). Only files with a supported extension
 are analyzed; anything else under the source roots is ignored. `#[cfg(test)]` module
 stripping applies to Rust files only. Runnable examples live in
 [`tests/fixtures/`](tests/fixtures), one per language.
