@@ -69,10 +69,11 @@ runs:
 
         if ($ver -eq 'latest') {
           # Resolve via the github.com redirect, not api.github.com — the latter has a
-          # tight unauthenticated rate limit that 403s on shared CI runner IPs.
-          $r = Invoke-WebRequest "https://github.com/$repo/releases/latest" -MaximumRedirection 0 -SkipHttpErrorCheck
-          $loc = [string]$r.Headers.Location
-          $ver = $loc.Substring($loc.LastIndexOf('/') + 1)
+          # tight unauthenticated rate limit that 403s on shared CI runner IPs. Follow
+          # the redirect (HEAD, no body) and take the tag from the final URL
+          # (…/releases/tag/<tag>).
+          $final = (Invoke-WebRequest "https://github.com/$repo/releases/latest" -Method Head).BaseResponse.RequestMessage.RequestUri
+          $ver = $final.Segments[-1]
         }
 
         if ($env:RUNNER_ARCH -eq 'X64') {
