@@ -5,18 +5,18 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
+| backlog | 21 |
 | ongoing | 3 |
-| done | 36 |
+| done | 37 |
 | **total** | **61** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 67% (20/30 pts · 10/16 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 70% (21/30 pts · 11/16 done) · _medium_ · ongoing
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
-- [ ] [#dd9gu4d compare: accept a file path baseline, not just a git ref](backlog/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md) _(backlog)_
+- [x] [#dd9gu4d compare: accept a file path baseline, not just a git ref](done/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md)
 - [ ] [#ec8ph6b Verify the action's cargo-install fallback on a runner](backlog/ec8ph6b-verify-the-action-s-cargo-install-fallback-on-a-runner.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
 - [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
