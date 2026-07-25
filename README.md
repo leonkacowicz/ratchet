@@ -210,11 +210,26 @@ jobs:
           ratchet compare --root . --base "origin/${{ github.base_ref }}"
 ```
 
-**One-time bootstrap** in the repo you're adding the gate to: run `ratchet generate --root .`
-and **commit the resulting `quality-report.json`** — that snapshot is the baseline. Your
-existing violations are grandfathered (the ratchet only forbids making them worse), so you
-don't have to pay down debt to adopt it. From then on the two steps above keep the report
-fresh and block regressions.
+**One-time bootstrap** in the repo you're adding the gate to:
+
+1. **Point `sources` at your code.** ratchet scans `src` by default (see
+   [Configuration](#configuration)). If your code lives elsewhere — `lib/`, `app/`,
+   `packages/*`, a monorepo — add a `ratchet.json` with the right roots, or the gate will
+   measure nothing and silently guard nothing.
+2. **Confirm your languages are supported.** Only the languages in the
+   [Languages](#languages) table are analyzed; files in any other language are silently
+   ignored. If your main language isn't listed, ratchet won't gate it (yet).
+3. **Exclude generated and test code** via `exclude` globs. `#[cfg(test)]` stripping is
+   Rust-only, so in other languages test files count toward the metrics unless you exclude
+   them; do the same for vendored/generated output.
+4. **Generate and sanity-check the baseline.** Run `ratchet generate --root .`, then
+   **look at `quality-report.json` before committing it** — if it's near-empty, `sources`
+   or the language coverage is probably wrong. Once it looks right, commit it; that snapshot
+   is the baseline.
+
+Your existing violations are grandfathered (the ratchet only forbids making them *worse*),
+so you don't have to pay down debt to adopt it. From then on the two workflow steps above
+keep the report fresh and block regressions.
 
 Prefer not to use the action? [Install ratchet](#installation) however you like (the
 `install.sh` one-liner or `cargo install`) and run the same `ratchet` steps.
