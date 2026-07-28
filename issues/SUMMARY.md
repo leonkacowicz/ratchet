@@ -7,6 +7,7 @@
 |---|---:|
 | backlog | 20 |
 | ongoing | 3 |
+| in-review | 0 |
 | done | 38 |
 | **total** | **61** |
 
@@ -91,6 +92,10 @@
 _none_
 
 ## Ongoing
+
+_none_
+
+## In-review
 
 _none_
 
