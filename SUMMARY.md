@@ -5,10 +5,10 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
+| backlog | 21 |
 | in-progress | 3 |
 | in-review | 0 |
-| done | 40 |
+| done | 41 |
 | **total** | **65** |
 
 ## Hierarchies
@@ -90,7 +90,6 @@
 ## Backlog
 
 - [#tj4qdt9 Decide whether the default sources should include test directories](items/tj4qdt9-decide-whether-the-default-sources-should-include-test-directories.md) — _medium_
-- [#k6dcrvt Split src/main.rs: 21 functions over the file_functions threshold](items/k6dcrvt-split-src-main-rs-21-functions-over-the-file-functions-threshold.md) — _low_
 
 ## In-progress
 
@@ -106,3 +105,4 @@ _none_
 - [#8bqetja Release v0.1.0](items/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
 - [#p7t6qnm cfg(test) module stripping is disabled by a gated non-module item placed before it](items/p7t6qnm-cfg-test-module-stripping-is-disabled-by-a-gated-non-module-item-placed-before-it.md) — _high_ · _superseded_ (closed 2026-08-14)
 - [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](items/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_ (closed 2026-07-25)
+- [#k6dcrvt Split src/main.rs: 21 functions over the file_functions threshold](items/k6dcrvt-split-src-main-rs-21-functions-over-the-file-functions-threshold.md) — _low_ (closed 2026-08-14)
