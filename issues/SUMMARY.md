@@ -5,11 +5,11 @@
 
 | State | Count |
 |---|---:|
-| backlog | 21 |
+| backlog | 22 |
 | in-progress | 3 |
 | in-review | 0 |
-| done | 38 |
-| **total** | **62** |
+| done | 40 |
+| **total** | **65** |
 
 ## Hierarchies
 
@@ -89,7 +89,8 @@
 
 ## Backlog
 
-- [#p7t6qnm cfg(test) module stripping is disabled by a gated non-module item placed before it](items/p7t6qnm-cfg-test-module-stripping-is-disabled-by-a-gated-non-module-item-placed-before-it.md) — _high_
+- [#tj4qdt9 Decide whether the default sources should include test directories](items/tj4qdt9-decide-whether-the-default-sources-should-include-test-directories.md) — _medium_
+- [#k6dcrvt Split src/main.rs: 21 functions over the file_functions threshold](items/k6dcrvt-split-src-main-rs-21-functions-over-the-file-functions-threshold.md) — _low_
 
 ## In-progress
 
@@ -101,5 +102,7 @@ _none_
 
 ## Done
 
+- [#46dzb3w Measure test code like production: drop the cfg(test) exemption, add tests to sources](items/46dzb3w-measure-test-code-like-production-drop-the-cfg-test-exemption-add-tests-to-sources.md) — _high_ (closed 2026-08-14)
 - [#8bqetja Release v0.1.0](items/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
+- [#p7t6qnm cfg(test) module stripping is disabled by a gated non-module item placed before it](items/p7t6qnm-cfg-test-module-stripping-is-disabled-by-a-gated-non-module-item-placed-before-it.md) — _high_ · _superseded_ (closed 2026-08-14)
 - [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](items/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_ (closed 2026-07-25)
