@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-14
+
+### Changed
+
+- **Test code is measured like production code.** Rust `#[cfg(test)]` modules are no longer
+  stripped before parsing; a file is analyzed exactly as written. Tests are where mess is
+  normally tolerated, and that is backwards — a test has to be readable to explain what it
+  tests, and a test file that cannot be kept organized is usually pointing at code under test
+  that does too much. Which test code is gated is now decided by `sources` alone, not by a
+  hidden per-language rule.
+
+  **Action required for Rust consumers:** metrics for files containing `#[cfg(test)]` modules
+  will grow on the next `ratchet generate`. Regenerate and commit `quality-report.json` in its
+  own commit before relying on `compare` again — the two sides otherwise measure different
+  things. Test *fixtures* are data rather than code and belong in `exclude`.
+
+### Fixed
+
+- **A `#[cfg(test)]` module declaration no longer hides an entire file.** The old stripper
+  truncated from the first line equal to `#[cfg(test)]` to end of file, so a `#[cfg(test)] mod
+  NAME;` declaration — or any gated non-module item placed above the test module — silently
+  erased everything after it. ratchet's own `src/main.rs` was being measured as 2 lines and 0
+  functions instead of 295 and 21. Removing the stripper removes the failure mode.
+
 ## [0.1.1] - 2026-07-25
 
 ### Fixed
