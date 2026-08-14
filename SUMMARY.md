@@ -71,7 +71,7 @@
 
 - [x] [#4mtrdc7 Define config file format and loader](items/4mtrdc7-define-config-file-format-and-loader.md)
 - [x] [#9h98w7h Configurable source roots and include/exclude globs](items/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
-- [ ] [#swshs5v Per-language test/generated-code exclusion hook](items/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
+- [ ] [#swshs5v Optional in-file test-code exclusion, off by default](items/swshs5v-optional-in-file-test-code-exclusion-off-by-default.md) _(backlog)_
 - [x] [#w2tdb7m Move metric thresholds into the config file](items/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
 ### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](items/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 100% (56/56 pts · 17/17 done) · _medium_ · done
