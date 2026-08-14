@@ -5,93 +5,93 @@
 
 | State | Count |
 |---|---:|
-| backlog | 20 |
-| ongoing | 3 |
+| backlog | 21 |
+| in-progress | 3 |
 | in-review | 0 |
 | done | 38 |
-| **total** | **61** |
+| **total** | **62** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](ongoing/83srk9g-packaging-ci-developer-experience.md) — 70% (21/30 pts · 11/16 done) · _medium_ · ongoing
+### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 70% (21/30 pts · 11/16 done) · _medium_ · in-progress
 
-- [x] [#8a7532w Example CI workflow (generate / check / compare)](done/8a7532w-example-ci-workflow-generate-check-compare.md)
-- [ ] [#b6r446p Document Collector seam with a second collector](backlog/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
-- [x] [#dd9gu4d compare: accept a file path baseline, not just a git ref](done/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md)
-- [ ] [#ec8ph6b Verify the action's cargo-install fallback on a runner](backlog/ec8ph6b-verify-the-action-s-cargo-install-fallback-on-a-runner.md) _(backlog)_
-- [x] [#g72wvqb Rename workspace_root param to root](done/g72wvqb-rename-workspace-root-param-to-root.md)
-- [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](done/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
-- [x] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](done/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md)
-- [ ] [#pwvm6nk Expand documentation and usage examples](backlog/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
-- [ ] [#qmsp4z6 Publish ratchet to crates.io](backlog/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
-- [x] [#s8y8set Bump CI actions off deprecated Node.js 20](done/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
-- [ ] [#t7esuj9 Machine- and human-readable report output formats](backlog/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
-- [x] [#uuf98vh Standalone install script for prebuilt binaries](done/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
-- [x] [#x3gsxma Bump softprops/action-gh-release off deprecated Node.js 20](done/x3gsxma-bump-softprops-action-gh-release-off-deprecated-node-js-20.md)
-- [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](done/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
-- [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](done/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
-- [x] [#z9cywvc Drop vendored mozjs for published tree-sitter-javascript](done/z9cywvc-drop-vendored-mozjs-for-published-tree-sitter-javascript.md)
+- [x] [#8a7532w Example CI workflow (generate / check / compare)](items/8a7532w-example-ci-workflow-generate-check-compare.md)
+- [ ] [#b6r446p Document Collector seam with a second collector](items/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
+- [x] [#dd9gu4d compare: accept a file path baseline, not just a git ref](items/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md)
+- [ ] [#ec8ph6b Verify the action's cargo-install fallback on a runner](items/ec8ph6b-verify-the-action-s-cargo-install-fallback-on-a-runner.md) _(backlog)_
+- [x] [#g72wvqb Rename workspace_root param to root](items/g72wvqb-rename-workspace-root-param-to-root.md)
+- [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](items/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
+- [x] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](items/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md)
+- [ ] [#pwvm6nk Expand documentation and usage examples](items/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
+- [ ] [#qmsp4z6 Publish ratchet to crates.io](items/qmsp4z6-publish-ratchet-to-crates-io.md) _(backlog)_
+- [x] [#s8y8set Bump CI actions off deprecated Node.js 20](items/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
+- [ ] [#t7esuj9 Machine- and human-readable report output formats](items/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
+- [x] [#uuf98vh Standalone install script for prebuilt binaries](items/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
+- [x] [#x3gsxma Bump softprops/action-gh-release off deprecated Node.js 20](items/x3gsxma-bump-softprops-action-gh-release-off-deprecated-node-js-20.md)
+- [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](items/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
+- [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](items/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
+- [x] [#z9cywvc Drop vendored mozjs for published tree-sitter-javascript](items/z9cywvc-drop-vendored-mozjs-for-published-tree-sitter-javascript.md)
 
-### [#9wv6muz Organizational & structural metrics](backlog/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
+### [#9wv6muz Organizational & structural metrics](items/9wv6muz-organizational-structural-metrics.md) — 0% (0/14 pts · 0/6 done) · _medium_ · backlog
 
-- [ ] [#bys9rhu Test-vs-production ratio per module metric](backlog/bys9rhu-test-vs-production-ratio-per-module-metric.md) _(backlog)_
-- [ ] [#md82cjp Lines-per-module metric](backlog/md82cjp-lines-per-module-metric.md) _(backlog)_
-- [ ] [#phgwwrr Functions-per-module metric](backlog/phgwwrr-functions-per-module-metric.md) _(backlog)_
-- [ ] [#pqdqd7e Public API surface per module metric](backlog/pqdqd7e-public-api-surface-per-module-metric.md) _(backlog)_
-- [ ] [#t4akte5 Public method/attribute counts from rca npm/npa metrics](backlog/t4akte5-public-method-attribute-counts-from-rca-npm-npa-metrics.md) _(backlog)_
-- [ ] [#zytfjgw Count types per module (generalize space walk)](backlog/zytfjgw-count-types-per-module-generalize-space-walk.md) _(backlog)_
+- [ ] [#bys9rhu Test-vs-production ratio per module metric](items/bys9rhu-test-vs-production-ratio-per-module-metric.md) _(backlog)_
+- [ ] [#md82cjp Lines-per-module metric](items/md82cjp-lines-per-module-metric.md) _(backlog)_
+- [ ] [#phgwwrr Functions-per-module metric](items/phgwwrr-functions-per-module-metric.md) _(backlog)_
+- [ ] [#pqdqd7e Public API surface per module metric](items/pqdqd7e-public-api-surface-per-module-metric.md) _(backlog)_
+- [ ] [#t4akte5 Public method/attribute counts from rca npm/npa metrics](items/t4akte5-public-method-attribute-counts-from-rca-npm-npa-metrics.md) _(backlog)_
+- [ ] [#zytfjgw Count types per module (generalize space walk)](items/zytfjgw-count-types-per-module-generalize-space-walk.md) _(backlog)_
 
-### [#bstr2wx Module relationship & dependency metrics](backlog/bstr2wx-module-relationship-dependency-metrics.md) — 0% (0/18 pts · 0/4 done) · _low_ · backlog
+### [#bstr2wx Module relationship & dependency metrics](items/bstr2wx-module-relationship-dependency-metrics.md) — 0% (0/18 pts · 0/4 done) · _low_ · backlog
 
-- [ ] [#b6vrhtu Layering / boundary rule enforcement](backlog/b6vrhtu-layering-boundary-rule-enforcement.md) _(backlog)_
-- [ ] [#erq5vr2 Dependency cycle detection](backlog/erq5vr2-dependency-cycle-detection.md) _(backlog)_
-- [ ] [#pm3sm8p Coupling metrics (fan-in/fan-out, instability)](backlog/pm3sm8p-coupling-metrics-fan-in-fan-out-instability.md) _(backlog)_
-- [ ] [#xg5fk9a Extract module import/dependency graph](backlog/xg5fk9a-extract-module-import-dependency-graph.md) _(backlog)_
+- [ ] [#b6vrhtu Layering / boundary rule enforcement](items/b6vrhtu-layering-boundary-rule-enforcement.md) _(backlog)_
+- [ ] [#erq5vr2 Dependency cycle detection](items/erq5vr2-dependency-cycle-detection.md) _(backlog)_
+- [ ] [#pm3sm8p Coupling metrics (fan-in/fan-out, instability)](items/pm3sm8p-coupling-metrics-fan-in-fan-out-instability.md) _(backlog)_
+- [ ] [#xg5fk9a Extract module import/dependency graph](items/xg5fk9a-extract-module-import-dependency-graph.md) _(backlog)_
 
-### [#cjdfqrx Multi-language support](ongoing/cjdfqrx-multi-language-support.md) — 65% (11/17 pts · 3/5 done) · _high_ · ongoing
+### [#cjdfqrx Multi-language support](items/cjdfqrx-multi-language-support.md) — 65% (11/17 pts · 3/5 done) · _high_ · in-progress
 
-- [ ] [#7g5s97m Go support via native tree-sitter](backlog/7g5s97m-go-support-via-external-tool-collector.md) _(backlog)_
-- [ ] [#b3bbdge Kotlin support](backlog/b3bbdge-kotlin-support.md) _(backlog)_
-- [x] [#e4jhf5c Handle uneven metric coverage across languages](done/e4jhf5c-handle-uneven-metric-coverage-across-languages.md)
-- [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](done/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
-- [x] [#mzm7h9r Dispatch parser by file extension](done/mzm7h9r-dispatch-parser-by-file-extension.md)
+- [ ] [#7g5s97m Go support via native tree-sitter](items/7g5s97m-go-support-via-external-tool-collector.md) _(backlog)_
+- [ ] [#b3bbdge Kotlin support](items/b3bbdge-kotlin-support.md) _(backlog)_
+- [x] [#e4jhf5c Handle uneven metric coverage across languages](items/e4jhf5c-handle-uneven-metric-coverage-across-languages.md)
+- [x] [#mpjw47f Enable rca-supported languages (C/C++, Python, Java, JS, TS)](items/mpjw47f-enable-rca-supported-languages-c-c-python-java-js-ts.md)
+- [x] [#mzm7h9r Dispatch parser by file extension](items/mzm7h9r-dispatch-parser-by-file-extension.md)
 
-### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](done/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 100% (31/31 pts · 8/8 done) · _low_ · done
+### [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](items/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md) — 100% (31/31 pts · 8/8 done) · _low_ · done
 
-- [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](done/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
-- [x] [#9gkaehf Drop the rust-code-analysis dependency](done/9gkaehf-drop-the-rust-code-analysis-dependency.md)
-- [x] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](done/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md)
-- [x] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](done/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md)
-- [x] [#knau82g Generalize the native layer to be language-parameterized](done/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
-- [x] [#q6dbjtq Native metrics for Python (vendor tree-sitter-python)](done/q6dbjtq-native-metrics-for-python-vendor-tree-sitter-python.md)
-- [x] [#skcztyt Native metrics for Java (vendor tree-sitter-java)](done/skcztyt-native-metrics-for-java-vendor-tree-sitter-java.md)
-- [x] [#xemvnh6 Native metrics for C/C++ (vendor tree-sitter-cpp)](done/xemvnh6-native-metrics-for-c-c-vendor-tree-sitter-cpp.md)
+- [x] [#2h8a4z4 Native metrics for JavaScript (vendor mozjs grammar; JS-family rules)](items/2h8a4z4-native-metrics-for-javascript-vendor-mozjs-grammar-js-family-rules.md)
+- [x] [#9gkaehf Drop the rust-code-analysis dependency](items/9gkaehf-drop-the-rust-code-analysis-dependency.md)
+- [x] [#9ucs2dg Native metrics for TypeScript (reuse JS-family rules)](items/9ucs2dg-native-metrics-for-typescript-reuse-js-family-rules.md)
+- [x] [#a7vr6ws Native metrics for TSX (reuse JS-family rules)](items/a7vr6ws-native-metrics-for-tsx-reuse-js-family-rules.md)
+- [x] [#knau82g Generalize the native layer to be language-parameterized](items/knau82g-generalize-the-native-layer-to-be-language-parameterized.md)
+- [x] [#q6dbjtq Native metrics for Python (vendor tree-sitter-python)](items/q6dbjtq-native-metrics-for-python-vendor-tree-sitter-python.md)
+- [x] [#skcztyt Native metrics for Java (vendor tree-sitter-java)](items/skcztyt-native-metrics-for-java-vendor-tree-sitter-java.md)
+- [x] [#xemvnh6 Native metrics for C/C++ (vendor tree-sitter-cpp)](items/xemvnh6-native-metrics-for-c-c-vendor-tree-sitter-cpp.md)
 
-### [#ez785p3 Configuration file support](ongoing/ez785p3-configuration-file-support.md) — 73% (8/11 pts · 3/4 done) · _high_ · ongoing
+### [#ez785p3 Configuration file support](items/ez785p3-configuration-file-support.md) — 73% (8/11 pts · 3/4 done) · _high_ · in-progress
 
-- [x] [#4mtrdc7 Define config file format and loader](done/4mtrdc7-define-config-file-format-and-loader.md)
-- [x] [#9h98w7h Configurable source roots and include/exclude globs](done/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
-- [ ] [#swshs5v Per-language test/generated-code exclusion hook](backlog/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
-- [x] [#w2tdb7m Move metric thresholds into the config file](done/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
+- [x] [#4mtrdc7 Define config file format and loader](items/4mtrdc7-define-config-file-format-and-loader.md)
+- [x] [#9h98w7h Configurable source roots and include/exclude globs](items/9h98w7h-configurable-source-roots-and-include-exclude-globs.md)
+- [ ] [#swshs5v Per-language test/generated-code exclusion hook](items/swshs5v-per-language-test-generated-code-exclusion-hook.md) _(backlog)_
+- [x] [#w2tdb7m Move metric thresholds into the config file](items/w2tdb7m-move-metric-thresholds-into-the-config-file.md)
 
-### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](done/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 100% (56/56 pts · 17/17 done) · _medium_ · done
+### [#q9xq5db Replace rust-code-analysis with raw tree-sitter + own metrics](items/q9xq5db-replace-rust-code-analysis-with-raw-tree-sitter-own-metrics.md) — 100% (56/56 pts · 17/17 done) · _medium_ · done
 
-- [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](done/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
-- [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](done/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
-- [x] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](done/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md)
-- [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](done/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
-- [x] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](done/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md)
-- [x] [#mz997tp Native function-space walk: identify + name functions to match rca](done/mz997tp-native-function-space-walk-identify-name-functions-to-match-rca.md)
-- [x] [#ne4vt2h Dual-path metric collector + rca parity harness](done/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md)
-- [x] [#pybgwkw Migrate SLOC to raw tree-sitter (Rust)](done/pybgwkw-migrate-sloc-to-raw-tree-sitter-rust.md)
-- [x] [#uruwbkx Rust PoC: vendor grammar + static-link, produce a raw tree-sitter tree](done/uruwbkx-rust-poc-vendor-grammar-static-link-produce-a-raw-tree-sitter-tree.md)
-- [x] [#yykk8vd Remove rca from the Rust path (all Rust metrics native)](done/yykk8vd-remove-rca-from-the-rust-path-all-rust-metrics-native.md)
+- [x] [#3uxsr6z Migrate function-args (nargs) to raw tree-sitter (Rust)](items/3uxsr6z-migrate-function-args-nargs-to-raw-tree-sitter-rust.md)
+- [x] [#4evkgjm Migrate cognitive complexity to raw tree-sitter (Rust)](items/4evkgjm-migrate-cognitive-complexity-to-raw-tree-sitter-rust.md)
+- [x] [#8mtwxae Migrate cyclomatic complexity to raw tree-sitter (Rust)](items/8mtwxae-migrate-cyclomatic-complexity-to-raw-tree-sitter-rust.md)
+- [x] [#bbuwa2r Migrate function-count (nom) to raw tree-sitter (Rust)](items/bbuwa2r-migrate-function-count-nom-to-raw-tree-sitter-rust.md)
+- [x] [#ecjw6gc Roll out native metrics to remaining languages & drop rca entirely](items/ecjw6gc-roll-out-native-metrics-to-remaining-languages-drop-rca-entirely.md)
+- [x] [#mz997tp Native function-space walk: identify + name functions to match rca](items/mz997tp-native-function-space-walk-identify-name-functions-to-match-rca.md)
+- [x] [#ne4vt2h Dual-path metric collector + rca parity harness](items/ne4vt2h-dual-path-metric-collector-rca-parity-harness.md)
+- [x] [#pybgwkw Migrate SLOC to raw tree-sitter (Rust)](items/pybgwkw-migrate-sloc-to-raw-tree-sitter-rust.md)
+- [x] [#uruwbkx Rust PoC: vendor grammar + static-link, produce a raw tree-sitter tree](items/uruwbkx-rust-poc-vendor-grammar-static-link-produce-a-raw-tree-sitter-tree.md)
+- [x] [#yykk8vd Remove rca from the Rust path (all Rust metrics native)](items/yykk8vd-remove-rca-from-the-rust-path-all-rust-metrics-native.md)
 
 ## Backlog
 
-_none_
+- [#p7t6qnm cfg(test) module stripping is disabled by a gated non-module item placed before it](items/p7t6qnm-cfg-test-module-stripping-is-disabled-by-a-gated-non-module-item-placed-before-it.md) — _high_
 
-## Ongoing
+## In-progress
 
 _none_
 
@@ -101,5 +101,5 @@ _none_
 
 ## Done
 
-- [#8bqetja Release v0.1.0](done/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
-- [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](done/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_ (closed 2026-07-25)
+- [#8bqetja Release v0.1.0](items/8bqetja-release-v0-1-0.md) — _high_ (closed 2026-07-24)
+- [#ww4ye7a compare reads baseline from repo root, ignoring --root (per-component always bootstrap-skips)](items/ww4ye7a-compare-reads-baseline-from-repo-root-ignoring-root-per-component-always-bootstrap-skips.md) — _high_ (closed 2026-07-25)
