@@ -36,12 +36,6 @@ impl Language {
             _ => None,
         }
     }
-
-    /// Whether trailing `#[cfg(test)]` module stripping applies before parsing.
-    /// Only Rust uses that convention.
-    pub fn strips_rust_test_modules(self) -> bool {
-        matches!(self, Self::Rust)
-    }
 }
 
 #[cfg(test)]
@@ -100,14 +94,6 @@ mod tests {
             let source = std::fs::read(&path).unwrap_or_else(|e| panic!("reading fixture {file}: {e}"));
             let analysis = crate::native::analyze(*expected, &source).unwrap_or_else(|| panic!("no native analysis for fixture {file}"));
             assert!(analysis.file_functions() >= 1, "fixture {file} yielded no functions");
-        }
-    }
-
-    #[test]
-    fn test_strips_rust_test_modules_only_for_rust() {
-        assert!(Language::Rust.strips_rust_test_modules());
-        for lang in [Language::TypeScript, Language::Tsx, Language::Cpp, Language::Python, Language::Java, Language::JavaScript] {
-            assert!(!lang.strips_rust_test_modules(), "{lang:?} must not strip Rust test modules");
         }
     }
 }

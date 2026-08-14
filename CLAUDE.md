@@ -53,7 +53,10 @@ languages ratchet implements with full metric coverage. Files are dispatched to
 a parser by extension (`src/language.rs`); source
 roots, include/exclude globs, and per-category threshold overrides come from an optional
 `ratchet.json` (`src/config.rs` → `src/sources.rs`), defaulting to scanning `src` with the
-built-in thresholds. `#[cfg(test)]` stripping applies to Rust only. Runnable per-language
+built-in thresholds. **Test code is measured like production code** — a file is parsed exactly
+as written, with no source transformed away first; which tests are gated is decided by
+`sources` alone. Test *fixtures* are data, not code, and are excluded by glob (this repo's own
+`ratchet.json` excludes `tests/fixtures/**`). Runnable per-language
 examples live in `tests/fixtures/`. Further languages (Kotlin, Go via an external tool) and
 organizational metrics are the roadmap — see issue tracking below.
 

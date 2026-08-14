@@ -145,8 +145,9 @@ metric coverage:
 Extension routing follows the conventional mapping (e.g. `.js`/`.jsx` go to
 tree-sitter-javascript; `tree-sitter-cpp` covers both C and C++; `.ts` and `.tsx` are the
 two grammars in the `tree-sitter-typescript` crate). Only files with a supported extension
-are analyzed; anything else under the source roots is ignored. `#[cfg(test)]` module
-stripping applies to Rust files only. Runnable examples live in
+are analyzed; anything else under the source roots is ignored. Files are measured exactly
+as written — no part of a file is transformed away before parsing, so test code counts like
+any other code (see [Test code](#test-code)). Runnable examples live in
 [`tests/fixtures/`](tests/fixtures), one per language.
 
 ## Configuration
@@ -158,7 +159,7 @@ with `--config PATH`), it is loaded; otherwise defaults apply. All fields are op
 {
   "sources": ["src"],
   "include": [],
-  "exclude": ["**/*.d.ts", "**/*.test.ts"],
+  "exclude": ["**/*.d.ts", "**/generated/**"],
   "thresholds": { "function_lines": 60, "file_lines": 400 }
 }
 ```
@@ -176,6 +177,28 @@ with `--config PATH`), it is loaded; otherwise defaults apply. All fields are op
 
 Defaults reproduce the original behaviour: scan `src` for every supported language with no
 glob filtering and the built-in thresholds.
+
+### Test code
+
+**Test code is measured like production code.** A file is analyzed exactly as written —
+ratchet does not strip Rust `#[cfg(test)]` modules, skip `test_*.py`, or otherwise decide on
+your behalf that some code doesn't count.
+
+That is a deliberate position. Tests are where mess is normally tolerated, and that is
+backwards: a test has to be readable to explain what is being tested. When a test file needs
+so many cases that it stops being organized, the cases want grouping — and when grouping
+isn't enough either, that is usually a signal the code under test does too much and should be
+split. Those are exactly the pressures the ratchet exists to apply.
+
+Which test code is gated is therefore decided by `sources`, not by a hidden rule: list your
+test directories to gate them, leave them out to skip them. Note the asymmetry if you skip
+them — a language with out-of-tree tests (`tests/`, `src/test/java`) escapes the gate by
+directory, while languages with inline tests (Rust `#[cfg(test)]` modules, Python doctests)
+do not.
+
+Test *fixtures* are a different thing from test *code*: deliberately gnarly sample inputs are
+data, and `exclude` is the right tool for them. This repo does exactly that — see its
+[`ratchet.json`](ratchet.json).
 
 ## Continuous integration
 
@@ -225,9 +248,10 @@ jobs:
 2. **Confirm your languages are supported.** Only the languages in the
    [Languages](#languages) table are analyzed; files in any other language are silently
    ignored. If your main language isn't listed, ratchet won't gate it (yet).
-3. **Exclude generated and test code** via `exclude` globs. `#[cfg(test)]` stripping is
-   Rust-only, so in other languages test files count toward the metrics unless you exclude
-   them; do the same for vendored/generated output.
+3. **Decide whether tests are in scope.** ratchet measures test code like production code
+   (see [Test code](#test-code)); whether your test *directories* are gated is entirely a
+   matter of which roots you list in `sources`. Exclude vendored and generated output via
+   `exclude` globs — that is machine-written and not worth ratcheting.
 4. **Generate and sanity-check the baseline.** Run `ratchet generate --root .`, then
    **look at `quality-report.json` before committing it** — if it's near-empty, `sources`
    or the language coverage is probably wrong. Once it looks right, commit it; that snapshot

@@ -74,8 +74,9 @@ struct SourceFile<'a> {
 impl Structural {
     fn collect_for_file(&self, unit: &SourceFile, violations: &mut CategoryMap) -> Result<()> {
         let raw = std::fs::read_to_string(unit.path).with_context(|| format!("reading {}", unit.path.display()))?;
-        let source = if unit.lang.strips_rust_test_modules() { strip_test_modules(&raw) } else { raw };
-        let source_bytes = source.into_bytes();
+        // Measured exactly as written: no source is transformed away before parsing.
+        // Test code is held to the same thresholds as production code.
+        let source_bytes = raw.into_bytes();
         // Detect -> dispatch -> parse, once. Every language ratchet measures has a
         // native implementation, so a file that fails to parse is simply skipped.
         let Some(analysis) = native::analyze(unit.lang, &source_bytes) else {
@@ -146,31 +147,6 @@ pub fn dump_tree(path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Truncate a Rust source file at the first trailing `#[cfg(test)] mod
-/// NAME { … }` block and return only the production-code prefix.
-///
-/// Targets the convention of one test module at the bottom of each `src/*.rs`
-/// file. Detects the first line that is exactly `#[cfg(test)]` followed (after
-/// possible blanks) by a `[pub ]mod` line, and drops everything from the
-/// attribute to EOF. Files without that pattern are returned unchanged.
-fn strip_test_modules(source: &str) -> String {
-    let lines: Vec<&str> = source.lines().collect();
-    let Some(cfg_idx) = lines.iter().position(|l| l.trim() == "#[cfg(test)]") else {
-        return source.to_string();
-    };
-    let next_non_blank = lines.iter().skip(cfg_idx + 1).find(|l| !l.trim().is_empty());
-    let Some(next) = next_non_blank else {
-        return source.to_string();
-    };
-    let trimmed = next.trim();
-    if !trimmed.starts_with("mod ") && !trimmed.starts_with("pub mod ") {
-        return source.to_string();
-    }
-    let mut result = lines[..cfg_idx].join("\n");
-    result.push('\n');
-    result
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,36 +166,37 @@ mod tests {
         assert_eq!(entries.get("x.rs::bar"), Some(&1));
     }
 
+    /// Test code counts. A `#[cfg(test)]` module is measured like any other
+    /// code, and a `#[cfg(test)] mod NAME;` declaration does not truncate the
+    /// file that declares it.
     #[test]
-    fn test_strip_test_modules_removes_trailing_cfg_test_block() {
-        let src = r#"pub fn real() -> i32 { 1 }
+    fn test_collect_for_file_measures_cfg_test_modules() {
+        let src = r#"#[cfg(test)]
+mod declared;
+
+pub fn real() -> i32 { 1 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn does_a_thing() {
-        assert_eq!(real(), 1);
+        assert_eq!(super::real(), 1);
     }
 }
 "#;
-        let stripped = strip_test_modules(src);
-        assert!(stripped.contains("pub fn real()"));
-        assert!(!stripped.contains("does_a_thing"));
-        assert!(!stripped.contains("assert_eq"));
-        // Stripped output must not include the cfg(test) attribute or any
-        // line that followed it.
-        assert!(!stripped.contains("#[cfg(test)]"));
-    }
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("x.rs");
+        std::fs::write(&path, src).unwrap();
 
-    #[test]
-    fn test_strip_test_modules_passes_through_files_without_test_block() {
-        let src = "pub fn x() {}\n";
-        assert_eq!(strip_test_modules(src), src);
-    }
+        // Thresholds of zero so every metric lands in the map as excess = value.
+        let thresholds = [(CATEGORY_FILE_LINES.to_string(), 0), (CATEGORY_FILE_FUNCTIONS.to_string(), 0)].into_iter().collect();
+        let mut violations = CategoryMap::new();
+        let unit = SourceFile { path: &path, lang: Language::Rust, rel: "x.rs".to_string() };
+        Structural::new(thresholds).collect_for_file(&unit, &mut violations).unwrap();
 
-    #[test]
-    fn test_strip_test_modules_ignores_cfg_test_not_followed_by_mod() {
-        let src = "#[cfg(test)]\nfn lone_test_fn() {}\n";
-        assert_eq!(strip_test_modules(src), src);
+        // The whole file, not just the production prefix. Truncating at the
+        // first `#[cfg(test)]` would have yielded 0 lines and 0 functions.
+        assert_eq!(violations[CATEGORY_FILE_LINES].get("x.rs"), Some(&12));
+        assert_eq!(violations[CATEGORY_FILE_FUNCTIONS].get("x.rs"), Some(&2));
     }
 }

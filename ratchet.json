@@ -1,0 +1,4 @@
+{
+  "sources": ["src", "tests"],
+  "exclude": ["tests/fixtures/**"]
+}
