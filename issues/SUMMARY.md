@@ -5,21 +5,22 @@
 
 | State | Count |
 |---|---:|
-| backlog | 21 |
+| backlog | 22 |
 | in-progress | 3 |
 | in-review | 0 |
 | done | 41 |
-| **total** | **65** |
+| **total** | **66** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 70% (21/30 pts · 11/16 done) · _medium_ · in-progress
+### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 68% (21/31 pts · 11/17 done) · _medium_ · in-progress
 
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](items/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](items/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [x] [#dd9gu4d compare: accept a file path baseline, not just a git ref](items/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md)
 - [ ] [#ec8ph6b Verify the action's cargo-install fallback on a runner](items/ec8ph6b-verify-the-action-s-cargo-install-fallback-on-a-runner.md) _(backlog)_
 - [x] [#g72wvqb Rename workspace_root param to root](items/g72wvqb-rename-workspace-root-param-to-root.md)
+- [ ] [#gkgh2g9 compare: a baseline epoch so a metrics change resets the ratchet honestly](items/gkgh2g9-compare-a-baseline-epoch-so-a-metrics-change-resets-the-ratchet-honestly.md) _(backlog)_
 - [x] [#m9435x3 Distribution: cargo install & prebuilt binaries](items/m9435x3-distribution-cargo-install-prebuilt-binaries.md)
 - [x] [#npzq4x5 Verify distribution paths end-to-end once v0.1.0 publishes](items/npzq4x5-verify-distribution-paths-end-to-end-once-v0-1-0-publishes.md)
 - [ ] [#pwvm6nk Expand documentation and usage examples](items/pwvm6nk-expand-documentation-and-usage-examples.md) _(backlog)_
