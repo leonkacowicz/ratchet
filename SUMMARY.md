@@ -6,14 +6,14 @@
 | State | Count |
 |---|---:|
 | backlog | 23 |
-| in-progress | 4 |
+| in-progress | 3 |
 | in-review | 0 |
-| done | 41 |
+| done | 42 |
 | **total** | **68** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 64% (21/33 pts · 11/19 done) · _medium_ · in-progress
+### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 67% (22/33 pts · 12/19 done) · _medium_ · in-progress
 
 - [ ] [#2vf9qkt Verify the tag-derived action version on a runner after the next release](items/2vf9qkt-verify-the-tag-derived-action-version-on-a-runner-after-the-next-release.md) _(backlog)_
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](items/8a7532w-example-ci-workflow-generate-check-compare.md)
@@ -29,7 +29,7 @@
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](items/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](items/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 - [x] [#uuf98vh Standalone install script for prebuilt binaries](items/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
-- [ ] [#vatzr6d The action's version input defaults to latest, so pinning the tag pins nothing](items/vatzr6d-the-action-s-version-input-defaults-to-latest-so-pinning-the-tag-pins-nothing.md) _(in-progress)_
+- [x] [#vatzr6d The action's version input defaults to latest, so pinning the tag pins nothing](items/vatzr6d-the-action-s-version-input-defaults-to-latest-so-pinning-the-tag-pins-nothing.md)
 - [x] [#x3gsxma Bump softprops/action-gh-release off deprecated Node.js 20](items/x3gsxma-bump-softprops-action-gh-release-off-deprecated-node-js-20.md)
 - [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](items/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
 - [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](items/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
