@@ -39,15 +39,15 @@ runs:
         # truthful version. A ref that names no release — a branch, a SHA, `uses: ./` —
         # has nothing to derive from, so the tool floats to the latest release.
         ver="${RATCHET_VERSION:-}"
-        why="requested explicitly via the 'version' input"
+        ref="${GITHUB_ACTION_REF:-}"
+        case "$ref" in
+        v[0-9]*.[0-9]*.[0-9]*) ref_tag="$ref" ;;
+        *) ref_tag="" ;;
+        esac
+        explicit=1
         if [ -z "$ver" ]; then
-          case "${GITHUB_ACTION_REF:-}" in
-          v[0-9]*.[0-9]*.[0-9]*) ver="$GITHUB_ACTION_REF" ;;
-          *)
-            ver=latest
-            why="the action ref '${GITHUB_ACTION_REF:-none}' names no release tag"
-            ;;
-          esac
+          explicit=0
+          ver="${ref_tag:-latest}"
         fi
         # GITHUB_ACTION_REPOSITORY is unset when the action runs as `uses: ./`
         # (local checkout); fall back to the canonical repo, as install.sh does.
@@ -70,10 +70,22 @@ runs:
         fi
         echo "$dir" >>"$GITHUB_PATH"
         installed="$("$bin" --version | awk '{print $2}')"
-        # A floating version means a rerun of this job can install a different binary.
-        # Say so, and name what it resolved to, so the log accounts for the gap.
+        # Two things leave the version in the workflow and the tool that ran out of step,
+        # and both are legitimate choices rather than errors — so say so in the log and
+        # name what was resolved, instead of failing. Silence is what made the default
+        # `latest` a trap in the first place.
         if [ "$ver" = latest ]; then
+          if [ "$explicit" -eq 1 ]; then
+            why="requested explicitly via the 'version' input"
+            if [ -n "$ref_tag" ]; then
+              why="$why, overriding the release named by the action ref '$ref_tag'"
+            fi
+          else
+            why="the action ref '${ref:-none}' names no release tag"
+          fi
           echo "::notice::ratchet version is floating ($why); installed the latest release, $installed. Reference this action by a release tag, or set the 'version' input, to pin it."
+        elif [ "$explicit" -eq 1 ] && [ -n "$ref_tag" ] && [ "$ver" != "$ref_tag" ]; then
+          echo "::notice::ratchet $installed came from the 'version' input while this action is referenced at '$ref_tag' — the tag in the workflow and the tool it installs are different versions. Drop the 'version' input to install the one the tag names."
         fi
         echo "version=$installed" >>"$GITHUB_OUTPUT"
 
@@ -91,18 +103,14 @@ runs:
         # Same resolution as the Linux/macOS step: explicit input, else the action's own
         # release tag, else float to latest. Keep the two in step.
         $ver = $env:RATCHET_VERSION
-        $actionRef = $env:GITHUB_ACTION_REF
-        $why = "requested explicitly via the 'version' input"
-        if (-not $ver) {
-          if ($actionRef -match '^v\d+\.\d+\.\d+') {
-            $ver = $actionRef
-          } else {
-            $ver = 'latest'
-            $shownRef = if ($actionRef) { $actionRef } else { 'none' }
-            $why = "the action ref '$shownRef' names no release tag"
-          }
+        $ref = $env:GITHUB_ACTION_REF
+        $refTag = if ($ref -match '^v\d+\.\d+\.\d+') { $ref } else { '' }
+        $explicit = [bool]$ver
+        if (-not $explicit) {
+          $ver = if ($refTag) { $refTag } else { 'latest' }
         }
         $floating = ($ver -eq 'latest')
+        $asked = $ver
         $dir = Join-Path $env:RUNNER_TEMP 'ratchet-bin'
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
 
@@ -136,7 +144,18 @@ runs:
 
         Add-Content $env:GITHUB_PATH $dir
         $installed = (& $bin --version).Split(' ')[1]
+        # Mirror of the Linux/macOS notices — see there for why these are notices and not
+        # failures. Keep the two wordings identical.
         if ($floating) {
+          if ($explicit) {
+            $why = "requested explicitly via the 'version' input"
+            if ($refTag) { $why = "$why, overriding the release named by the action ref '$refTag'" }
+          } else {
+            $shownRef = if ($ref) { $ref } else { 'none' }
+            $why = "the action ref '$shownRef' names no release tag"
+          }
           Write-Host "::notice::ratchet version is floating ($why); installed the latest release, $installed. Reference this action by a release tag, or set the 'version' input, to pin it."
+        } elseif ($explicit -and $refTag -and ($asked -ne $refTag)) {
+          Write-Host "::notice::ratchet $installed came from the 'version' input while this action is referenced at '$refTag' — the tag in the workflow and the tool it installs are different versions. Drop the 'version' input to install the one the tag names."
         }
         Add-Content $env:GITHUB_OUTPUT "version=$installed"

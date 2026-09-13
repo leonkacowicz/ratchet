@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **The action says so when the workflow's tag and the installed tool disagree.** An explicit
+  `version:` input against a tagged ref — `uses: ...@v0.2.1` asking for `version: v0.1.1` — is a
+  legitimate escape hatch, but it recreates the very thing 0.2.1 fixed: two versions in play with
+  only one of them visible. It now emits a `::notice::` naming both. A `version: latest` override
+  against a tagged ref likewise reports what it floated past. Agreement stays silent, and a ref
+  that names no release has nothing to contradict, so it stays silent too.
+
 ## [0.2.1] - 2026-09-13
 
 ### Fixed
