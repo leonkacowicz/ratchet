@@ -27,8 +27,9 @@ jobs:
       - uses: actions/checkout@v5
 
       # `uses: ./` runs the action from this checkout against the real published
-      # release (default input `version: latest`), so it validates action.yml +
-      # install.sh as they stand in this branch.
+      # release, so it validates action.yml + install.sh as they stand in this
+      # branch. A local checkout carries no release tag to derive a version from,
+      # so this is also the fallback path: the version must float to latest.
       - id: install
         uses: ./
 
@@ -37,3 +38,46 @@ jobs:
         run: |
           ratchet --version
           echo "action reported version: ${{ steps.install.outputs.version }}"
+
+      - name: the floating fallback resolved to a real version
+        shell: bash
+        env:
+          REPORTED: ${{ steps.install.outputs.version }}
+        run: |
+          got="$(ratchet --version | awk '{print $2}')"
+          [ -n "$REPORTED" ] || { echo "action reported no version"; exit 1; }
+          [ "$REPORTED" = "$got" ] || { echo "output says $REPORTED, binary says $got"; exit 1; }
+
+  # The version the action installs must be the one the workflow asked for, not
+  # whatever the newest release happens to be. Pinning is the whole point of the
+  # `version` input and of deriving a default from the action's own release tag;
+  # the derivation itself can only be exercised once a release carries it, so
+  # here we pin explicitly and assert the binary matches.
+  pinned:
+    name: an explicit version pins the binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    env:
+      # An older release than the newest, so "latest" and "pinned" can't coincide.
+      PINNED: "v0.1.1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: install
+        uses: ./
+        with:
+          version: ${{ env.PINNED }}
+
+      - name: the pinned version is the one installed
+        shell: bash
+        env:
+          REPORTED: ${{ steps.install.outputs.version }}
+        run: |
+          want="${PINNED#v}"
+          got="$(ratchet --version | awk '{print $2}')"
+          echo "wanted $want, binary says $got, action output says $REPORTED"
+          [ "$got" = "$want" ] || { echo "pinned version was not honoured"; exit 1; }
+          [ "$REPORTED" = "$want" ] || { echo "action output disagrees with the binary"; exit 1; }

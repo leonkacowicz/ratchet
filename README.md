@@ -231,13 +231,33 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # so `compare` can read the baseline report from the base ref
-      - uses: leonkacowicz/ratchet@v0.2.0 # installs `ratchet` onto PATH (or @main for latest)
+      - uses: leonkacowicz/ratchet@v0.2.0 # installs ratchet v0.2.0 onto PATH
       - run: ratchet check --root . # committed report must match the code
       - if: github.event_name == 'pull_request' # no regression vs the base branch
         run: |
           git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
           ratchet compare --root . --base "origin/${{ github.base_ref }}"
 ```
+
+**The tag you pin is the version you get.** `uses: ...@v0.2.0` selects two things at once —
+which copy of the action runs, and which ratchet binary it installs — and by default they are
+the same version, derived from that tag. So the one version visible in your workflow is the one
+doing the measuring, and re-running an old job installs what it installed the first time.
+
+Reference the action by anything that isn't a release tag — a branch, a commit SHA, a local
+`uses: ./` — and there is no version to derive, so the binary floats to the newest release. That
+is a real choice, not a mistake, so the action just says so in the job log and names what it
+resolved to. Override either way with the `version` input:
+
+```yaml
+- uses: leonkacowicz/ratchet@v0.2.0
+  with:
+    version: latest # float deliberately; or pin a different tag than the action's own
+```
+
+Pinning matters more here than for most actions: ratchet's metric definitions are part of the
+tool, so a version bump can change what is measured and turn a green gate red on an unrelated
+push. Upgrade when you choose to, and re-run `ratchet generate` as part of it.
 
 **One-time bootstrap** in the repo you're adding the gate to:
 

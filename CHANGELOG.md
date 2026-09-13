@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The action's `version` now defaults to the action's own release tag, not `latest`.**
+  `uses: leonkacowicz/ratchet@v0.1.1` pinned the installer and not the tool: the tag chose
+  which `action.yml` ran, while the binary it fetched was whatever the newest release happened
+  to be when the job ran. A consumer reading `@v0.1.1` silently got 0.2.0 — and with it a
+  change in what is measured — on their next unrelated push, and re-running an old green job
+  could install a different binary than it did the first time. The version is now derived from
+  `GITHUB_ACTION_REF` when that names a release tag, so the one version in the workflow is the
+  truth. A ref that names no release (a branch, a SHA, `uses: ./`) still floats to the latest
+  release, and an explicit `version:` input still wins over both; either way the job log now
+  carries a notice naming the version that was resolved.
+
 ## [0.2.0] - 2026-08-14
 
 ### Changed

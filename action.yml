@@ -6,9 +6,12 @@ branding:
 
 inputs:
   version:
-    description: 'Release tag to install (e.g. "v0.1.0"), or "latest".'
+    description: >-
+      Release tag to install (e.g. "v0.1.0"), or "latest" to float. Leave unset to install
+      the release matching the tag this action is referenced by (`uses: ...@v0.1.0` installs
+      ratchet v0.1.0), falling back to "latest" when that ref is not a release tag.
     required: false
-    default: "latest"
+    default: ""
 
 outputs:
   version:
@@ -30,27 +33,49 @@ runs:
         RATCHET_VERSION: ${{ inputs.version }}
       run: |
         set -eu
+        # Which ratchet to install. An explicit `version:` input always wins. Otherwise
+        # derive it from the ref this action was referenced by, so `uses: ...@v0.2.0`
+        # installs ratchet 0.2.0 and the tag in the consumer's workflow is the single,
+        # truthful version. A ref that names no release — a branch, a SHA, `uses: ./` —
+        # has nothing to derive from, so the tool floats to the latest release.
+        ver="${RATCHET_VERSION:-}"
+        why="requested explicitly via the 'version' input"
+        if [ -z "$ver" ]; then
+          case "${GITHUB_ACTION_REF:-}" in
+          v[0-9]*.[0-9]*.[0-9]*) ver="$GITHUB_ACTION_REF" ;;
+          *)
+            ver=latest
+            why="the action ref '${GITHUB_ACTION_REF:-none}' names no release tag"
+            ;;
+          esac
+        fi
         # GITHUB_ACTION_REPOSITORY is unset when the action runs as `uses: ./`
         # (local checkout); fall back to the canonical repo, as install.sh does.
         repo="${GITHUB_ACTION_REPOSITORY:-leonkacowicz/ratchet}"
         dir="$RUNNER_TEMP/ratchet-bin"
         mkdir -p "$dir"
-        if bash "$GITHUB_ACTION_PATH/install.sh" --version "$RATCHET_VERSION" --bin-dir "$dir"; then
+        if bash "$GITHUB_ACTION_PATH/install.sh" --version "$ver" --bin-dir "$dir"; then
           bin="$dir/ratchet"
         else
           echo "::warning::no prebuilt ratchet for this platform; building from source with cargo"
           # No bash arrays: macOS runners ship bash 3.2, where `"${arr[@]}"` on an
           # empty array errors under `set -u`.
-          if [ "$RATCHET_VERSION" = latest ]; then
+          if [ "$ver" = latest ]; then
             cargo install --git "https://github.com/$repo" --locked --root "$dir/cargo"
           else
-            cargo install --git "https://github.com/$repo" --locked --tag "$RATCHET_VERSION" --root "$dir/cargo"
+            cargo install --git "https://github.com/$repo" --locked --tag "$ver" --root "$dir/cargo"
           fi
           bin="$dir/cargo/bin/ratchet"
           echo "$dir/cargo/bin" >>"$GITHUB_PATH"
         fi
         echo "$dir" >>"$GITHUB_PATH"
-        echo "version=$("$bin" --version | awk '{print $2}')" >>"$GITHUB_OUTPUT"
+        installed="$("$bin" --version | awk '{print $2}')"
+        # A floating version means a rerun of this job can install a different binary.
+        # Say so, and name what it resolved to, so the log accounts for the gap.
+        if [ "$ver" = latest ]; then
+          echo "::notice::ratchet version is floating ($why); installed the latest release, $installed. Reference this action by a release tag, or set the 'version' input, to pin it."
+        fi
+        echo "version=$installed" >>"$GITHUB_OUTPUT"
 
     # Windows: install.sh is POSIX-only and the asset is a .zip, so do it natively.
     - name: Install ratchet (Windows)
@@ -63,11 +88,25 @@ runs:
         $ErrorActionPreference = 'Stop'
         # Unset under `uses: ./`; fall back to the canonical repo like install.sh.
         $repo = if ($env:GITHUB_ACTION_REPOSITORY) { $env:GITHUB_ACTION_REPOSITORY } else { 'leonkacowicz/ratchet' }
+        # Same resolution as the Linux/macOS step: explicit input, else the action's own
+        # release tag, else float to latest. Keep the two in step.
         $ver = $env:RATCHET_VERSION
+        $actionRef = $env:GITHUB_ACTION_REF
+        $why = "requested explicitly via the 'version' input"
+        if (-not $ver) {
+          if ($actionRef -match '^v\d+\.\d+\.\d+') {
+            $ver = $actionRef
+          } else {
+            $ver = 'latest'
+            $shownRef = if ($actionRef) { $actionRef } else { 'none' }
+            $why = "the action ref '$shownRef' names no release tag"
+          }
+        }
+        $floating = ($ver -eq 'latest')
         $dir = Join-Path $env:RUNNER_TEMP 'ratchet-bin'
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
 
-        if ($ver -eq 'latest') {
+        if ($floating) {
           # Resolve via the github.com redirect, not api.github.com — the latter has a
           # tight unauthenticated rate limit that 403s on shared CI runner IPs. Follow
           # the redirect (HEAD, no body) and take the tag from the final URL
@@ -88,6 +127,7 @@ runs:
           $bin = "$dir\ratchet.exe"
         } else {
           Write-Host "::warning::no prebuilt ratchet for Windows/$($env:RUNNER_ARCH); building from source with cargo"
+          # $ver is a concrete tag here even when floating — it was resolved above.
           $tag = if ($ver -eq 'latest') { @() } else { @('--tag', $ver) }
           cargo install --git "https://github.com/$repo" --locked @tag --root "$dir\cargo"
           $bin = "$dir\cargo\bin\ratchet.exe"
@@ -95,4 +135,8 @@ runs:
         }
 
         Add-Content $env:GITHUB_PATH $dir
-        Add-Content $env:GITHUB_OUTPUT "version=$((& $bin --version).Split(' ')[1])"
+        $installed = (& $bin --version).Split(' ')[1]
+        if ($floating) {
+          Write-Host "::notice::ratchet version is floating ($why); installed the latest release, $installed. Reference this action by a release tag, or set the 'version' input, to pin it."
+        }
+        Add-Content $env:GITHUB_OUTPUT "version=$installed"
