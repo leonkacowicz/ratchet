@@ -29,6 +29,10 @@ confirmation for the cargo-install fallback.
       tags published before the change
 - [ ] Once two releases carry the fix, pin the older of them and confirm it installs the older
       binary — the end-to-end case `#vatzr6d` is really about
+- [ ] The mismatch notice fires on a real tagged ref: `uses: ...@<newer tag>` with an explicit
+      `version: <older tag>` installs the older binary and logs a notice naming both versions, on
+      every runner OS. Like the rest of this issue it needs a release carrying the code, since
+      `uses: ./` supplies no ref to contradict
 
 ## Notes
 
