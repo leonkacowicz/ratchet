@@ -38,3 +38,19 @@ whether that variable is populated at all inside a composite action's steps.
 
 Related: `#vatzr6d` (the fix), `#ec8ph6b` (the sibling runner check), `#gkgh2g9` (the epoch that
 makes a deliberate upgrade honest once one happens).
+
+## Status
+
+**v0.2.1 (2026-09-13) is the first release carrying the fix** — that is the baseline this check
+needs, and it is now published.
+
+It is still not decidable today. `latest` currently *is* v0.2.1, so `uses: ...@v0.2.1` installs
+0.2.1 whether the version was derived from the tag or floated, and the pre-fix `action.yml` on
+every older tag would land on the same binary. The two behaviours only diverge once a second
+release exists and the older of the two can be pinned — criterion four. So: do this after v0.2.2.
+
+What *is* confirmed on real runners, from the smoke test on the release commit
+(run 34758580331, all six jobs green): the pwsh path executes correctly on windows-latest — it had
+never run locally, there is no pwsh on the dev machine — the explicit `version:` input installs the
+pinned older release on ubuntu/macOS/Windows alike, and the floating fallback under `uses: ./`
+emits the expected notice on all three, naming the version it resolved to.
