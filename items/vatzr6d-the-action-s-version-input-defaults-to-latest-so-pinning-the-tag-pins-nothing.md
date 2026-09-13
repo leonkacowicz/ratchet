@@ -44,15 +44,17 @@ naming the resolved version would make the choice visible in the log without fai
 
 ## Acceptance criteria
 
-- [ ] `version` defaults to the action's own release tag when `GITHUB_ACTION_REF` names one
-- [ ] Falls back to `latest` for a branch, a SHA, or a local `uses: ./` checkout
-- [ ] An explicit `version:` input still wins over both
-- [ ] Same behaviour on the Windows path, which resolves the version separately
-- [ ] A floating resolution — explicit `latest`, or the fallback — says so in the log, naming the
+- [x] `version` defaults to the action's own release tag when `GITHUB_ACTION_REF` names one
+- [x] Falls back to `latest` for a branch, a SHA, or a local `uses: ./` checkout
+- [x] An explicit `version:` input still wins over both
+- [x] Same behaviour on the Windows path, which resolves the version separately
+- [x] A floating resolution — explicit `latest`, or the fallback — says so in the log, naming the
       version it resolved to
-- [ ] README documents that the tag and the tool are two versions, and what pinning each one buys
-- [ ] Verified on a runner, not only by reading: a workflow pinned to an older tag installs that
-      older binary
+- [x] README documents that the tag and the tool are two versions, and what pinning each one buys
+- [~] Verified on a runner, not only by reading: a workflow pinned to an older tag installs that
+      older binary — the explicit-input half is now covered by a smoke-test job on all three
+      runner OSes; the tag-derived half is unreachable until a release carries the fix, so it is
+      split out to `#2vf9qkt`
 
 ## Notes
 
@@ -62,3 +64,20 @@ could account for, and the same mechanism would have silently changed what the g
 
 Related: `#gkgh2g9` (baseline epoch), `#ec8ph6b` (the cargo-install fallback, the other path through
 the same steps).
+
+## Resolution
+
+`version` now defaults to the empty string; both the bash and pwsh steps resolve it the same way —
+explicit input, else `GITHUB_ACTION_REF` when it matches a release-tag shape, else `latest`. A
+floating result emits a `::notice::` naming the version it resolved to and why it floated (asked
+for explicitly, or nothing to derive from).
+
+Verified locally: the bash derivation against a ten-case table (release tags, a prerelease tag, a
+branch, a bare `v0`, a SHA, an unset ref, and the explicit-input forms), `actionlint` clean on the
+workflows, and `shellcheck -S style` clean on the extracted composite step. The pwsh block is left
+to the Windows smoke-test runner — there is no pwsh on the dev machine, and the smoke test already
+runs on every change to `action.yml`.
+
+`.github/workflows/action-smoke-test.yml` gained a `pinned` job that installs an explicitly pinned
+older release on ubuntu/macOS/Windows and asserts both the binary and the action's `version` output
+match it, plus an assertion on the existing job that the `uses: ./` fallback reports a real version.
