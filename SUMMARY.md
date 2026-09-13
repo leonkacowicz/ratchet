@@ -5,16 +5,17 @@
 
 | State | Count |
 |---|---:|
-| backlog | 22 |
+| backlog | 23 |
 | in-progress | 4 |
 | in-review | 0 |
 | done | 41 |
-| **total** | **67** |
+| **total** | **68** |
 
 ## Hierarchies
 
-### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 66% (21/32 pts · 11/18 done) · _medium_ · in-progress
+### [#83srk9g Packaging, CI & developer experience](items/83srk9g-packaging-ci-developer-experience.md) — 64% (21/33 pts · 11/19 done) · _medium_ · in-progress
 
+- [ ] [#2vf9qkt Verify the tag-derived action version on a runner after the next release](items/2vf9qkt-verify-the-tag-derived-action-version-on-a-runner-after-the-next-release.md) _(backlog)_
 - [x] [#8a7532w Example CI workflow (generate / check / compare)](items/8a7532w-example-ci-workflow-generate-check-compare.md)
 - [ ] [#b6r446p Document Collector seam with a second collector](items/b6r446p-document-collector-seam-with-a-second-collector.md) _(backlog)_
 - [x] [#dd9gu4d compare: accept a file path baseline, not just a git ref](items/dd9gu4d-compare-accept-a-file-path-baseline-not-just-a-git-ref.md)
