@@ -5,8 +5,8 @@
 
 | State | Count |
 |---|---:|
-| backlog | 23 |
-| in-progress | 3 |
+| backlog | 22 |
+| in-progress | 4 |
 | in-review | 0 |
 | done | 41 |
 | **total** | **67** |
@@ -28,7 +28,7 @@
 - [x] [#s8y8set Bump CI actions off deprecated Node.js 20](items/s8y8set-bump-ci-actions-off-deprecated-node-js-20.md)
 - [ ] [#t7esuj9 Machine- and human-readable report output formats](items/t7esuj9-machine-and-human-readable-report-output-formats.md) _(backlog)_
 - [x] [#uuf98vh Standalone install script for prebuilt binaries](items/uuf98vh-standalone-install-script-for-prebuilt-binaries.md)
-- [ ] [#vatzr6d The action's version input defaults to latest, so pinning the tag pins nothing](items/vatzr6d-the-action-s-version-input-defaults-to-latest-so-pinning-the-tag-pins-nothing.md) _(backlog)_
+- [ ] [#vatzr6d The action's version input defaults to latest, so pinning the tag pins nothing](items/vatzr6d-the-action-s-version-input-defaults-to-latest-so-pinning-the-tag-pins-nothing.md) _(in-progress)_
 - [x] [#x3gsxma Bump softprops/action-gh-release off deprecated Node.js 20](items/x3gsxma-bump-softprops-action-gh-release-off-deprecated-node-js-20.md)
 - [x] [#xsmfwrs Relax grammar pins & upgrade tree-sitter now that rca is gone](items/xsmfwrs-relax-grammar-pins-upgrade-tree-sitter-now-that-rca-is-gone.md)
 - [x] [#ymh6bhq Consumer-facing reusable GitHub Action for the ratchet gate](items/ymh6bhq-consumer-facing-reusable-github-action-for-the-ratchet-gate.md)
